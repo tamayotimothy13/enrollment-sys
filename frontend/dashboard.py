@@ -1,5 +1,5 @@
 import tkinter as tk
-
+from frontend.student import show_students
 
 def show_dashboard():
 
@@ -17,7 +17,8 @@ def show_dashboard():
     students_button = tk.Button(
         window,
         text="Students",
-        width=20
+        width=20,
+        command=show_students
     )
     students_button.pack(pady=5)
 
