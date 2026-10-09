@@ -1,13 +1,13 @@
 import tkinter as tk
 from backend.auth import login
 from frontend.dashboard import show_dashboard
+from frontend.window import setup_window
 
 
 def show_login():
 
     window = tk.Tk()
-    window.title("Enrollment System")
-    window.geometry("400x300")
+    setup_window(window, "Login")
 
     username_textbox = tk.Entry(window)
     username_textbox.pack()

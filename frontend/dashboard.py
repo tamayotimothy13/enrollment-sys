@@ -1,11 +1,11 @@
 import tkinter as tk
 from frontend.student import show_students
+from frontend.window import setup_window
 
 def show_dashboard():
 
     window = tk.Tk()
-    window.title("Enrollment System")
-    window.geometry("500x400")
+    setup_window(window, "Enrollment System")
 
     title = tk.Label(
         window,
