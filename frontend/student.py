@@ -60,7 +60,7 @@ def create_personal_section(parent):
     last_name = create_field(frame, "Last Name", 0, 1)
     add_placeholder(last_name, "e.g  Dela Cruz")
 
-    middle_initial = create_field(frame, "M.I", 0, 2,width=15)
+    middle_initial = create_field(frame, "M.I", 0, 2, width=15)
     add_placeholder(middle_initial, "e.g  J.")
 
     prefix = create_field(frame, "Prefix", 0, 3, width=15)
@@ -299,9 +299,83 @@ def show_students():
             )
             return
 
+        
+        success = add_student(
+            first_name=first_name,
+            middle_name=middle_initial,
+            last_name=last_name,
+            prefix=prefix,
+            address=address,
+            birthday=birthday,
+            birth_place=birth_place,
+            contact_number=contact_number,
+            emergency_contact_number=emergency_contact_number,
+            email=email,
+            admission_type=admission_type,
+            year_level=year_level,
+            course=course
+        )
+
+        if not success:
+            messagebox.showerror(
+                "Database Error",
+                "Could not save the student. Check the terminal for details.",
+                parent=window
+            )
+            return
+
+        messagebox.showinfo(
+            "Success",
+            "Student successfully added!",
+            parent=window
+        )
+
+        # Clear text fields and restore placeholders.
+        personal_placeholders = {
+            "first_name": "e.g  Juan",
+            "middle_initial": "e.g  J.",
+            "last_name": "e.g  Dela Cruz",
+            "prefix": "e.g  Jr, II",
+            "birthday": "YYYY-MM-DD",
+            "birth_place": "e.g  Marikina City"
+        }
+
+        contact_placeholders = {
+            "address": "House/Unit/Lot No., Street Name, Subdivision/Village, Barangay, City",
+            "email": "example@email.com",
+            "contact_number": "09XXXXXXXXX",
+            "emergency_contact_number": "09XXXXXXXXX"
+        }
+
+        for name, entry in personal_fields.items():
+            entry.delete(0, tk.END)
+            add_placeholder(entry, personal_placeholders[name])
+
+        for name, entry in contact_fields.items():
+            entry.delete(0, tk.END)
+            add_placeholder(entry, contact_placeholders[name])
+
+        # Reset academic dropdowns.
+        academic_fields["admission_type"].set("")
+        academic_fields["year_level"]["values"] = (
+            "1st Year", "2nd Year", "3rd Year", "4th Year"
+        )
+        academic_fields["year_level"].set("")
+        academic_fields["course"].set("")
+
+    button_frame = tk.Frame(window)
+    button_frame.pack(pady=10)
+
+    close_button = tk.Button(
+        button_frame,
+        text="Close",
+        command=window.destroy
+    )
+    close_button.pack(side="left", padx=5)
+
     save_button = tk.Button(
-        window,
+        button_frame,
         text="Save Student",
         command=save_student
-        )
-    save_button.pack(pady=10)
+    )
+    save_button.pack(side="left", padx=5)

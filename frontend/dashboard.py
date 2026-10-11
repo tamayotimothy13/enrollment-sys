@@ -16,7 +16,7 @@ def show_dashboard():
 
     students_button = tk.Button(
         window,
-        text="Students",
+        text="Add Student(s)",
         width=20,
         command=show_students
     )
@@ -24,17 +24,24 @@ def show_dashboard():
 
     subjects_button = tk.Button(
         window,
-        text="Subjects",
+        text="Enroll Student(s)",
         width=20
     )
     subjects_button.pack(pady=5)
 
-    enrollment_button = tk.Button(
+    masterlist_button = tk.Button(
         window,
-        text="Enrollment",
+        text="View Masterlist",
         width=20
     )
-    enrollment_button.pack(pady=5)
+    masterlist_button.pack(pady=5)
+
+    courses_button = tk.Button(
+            window,
+            text="Courses",
+            width=20
+    )
+    courses_button.pack(pady=5)
 
     logout_button = tk.Button(
         window,
