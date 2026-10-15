@@ -1,6 +1,7 @@
 import tkinter as tk
 from frontend.student import show_students
 from frontend.window import setup_window
+from frontend.masterlist import show_masterlist
 
 def show_dashboard():
 
@@ -32,7 +33,8 @@ def show_dashboard():
     masterlist_button = tk.Button(
         window,
         text="View Masterlist",
-        width=20
+        width=20,
+        command=show_masterlist
     )
     masterlist_button.pack(pady=5)
 
@@ -46,7 +48,8 @@ def show_dashboard():
     logout_button = tk.Button(
         window,
         text="Logout",
-        width=20
+        width=20,
+        command=window.destroy
     )
     logout_button.pack(pady=20)
 
