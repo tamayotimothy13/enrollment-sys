@@ -72,7 +72,7 @@ def show_masterlist():
         relief="flat",
         bd=0,
         cursor="hand2",
-        command=lambda: search_entry.delete(0, tk.END)
+        command=lambda: clear_search()
     )
     clear_button.pack(side="right", padx=(0, 4))
     # =========================
@@ -383,6 +383,9 @@ def show_masterlist():
                 anchor="center"
             )
 
+    def clear_search():
+        search_entry.delete(0, tk.END)
+        load_students()
 
     def edit_student(student_id):
         student = get_student_by_id(student_id)
