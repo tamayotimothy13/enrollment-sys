@@ -3,8 +3,8 @@ import tkinter as tk
 def setup_window(window, title):
     window.title(title)
 
-    width = 800
-    height = 450
+    width = 900
+    height = 600
 
     # Get screen dimensions
     screen_width = window.winfo_screenwidth()
