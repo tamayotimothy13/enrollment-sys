@@ -2,6 +2,8 @@ import tkinter as tk
 from frontend.window import setup_window
 from frontend.student import show_students
 from frontend.masterlist import show_masterlist
+from frontend.course import show_courses
+from frontend.subject import show_subjects
 
 # COLORS
 BG_COLOR = "#F3F6FC"
@@ -79,7 +81,8 @@ def show_dashboard():
     nav_button("Add Student(s)", show_students)
     nav_button("Enroll Student(s)")
     nav_button("View Masterlist", show_masterlist)
-    nav_button("Courses")
+    nav_button("Courses", show_courses)
+    nav_button("Subjects", lambda: show_subjects(window))
 
     # Logout is the only functional button
     logout_button = tk.Button(
