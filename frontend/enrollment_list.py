@@ -19,7 +19,7 @@ def show_enrollment_list(parent=None):
     tk.Label(
         main,
         text="Enrollment Records",
-        font=("Arial", 16, "bold")
+        font=("Arial", 13, "bold")
     ).pack(anchor="w", pady=(0, 10))
 
     # Enrollment table
@@ -74,14 +74,14 @@ def show_enrollment_list(parent=None):
     tk.Label(
         main,
         text="Enrolled Subjects",
-        font=("Arial", 12, "bold")
+        font=("Arial", 13, "bold")
     ).pack(anchor="w", pady=(15, 5))
 
     subject_tree = ttk.Treeview(
         main,
         columns=("code", "name", "units"),
         show="headings",
-        height=5
+        height=6
     )
 
     subject_tree.heading("code", text="Subject Code")
@@ -92,7 +92,7 @@ def show_enrollment_list(parent=None):
     subject_tree.column("name", width=350)
     subject_tree.column("units", width=80, anchor="center")
 
-    subject_tree.pack(fill="x")
+    subject_tree.pack(fill="both", expand=True)
 
     total_label = tk.Label(
         main,
