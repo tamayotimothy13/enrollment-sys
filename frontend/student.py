@@ -1,9 +1,11 @@
 import tkinter as tk
 import re
 from tkinter import ttk, messagebox
-from backend.students import add_student, find_students_by_name
-from frontend.window import setup_window
 from datetime import datetime
+from backend.students import add_student, find_students_by_name
+from backend.courses import get_all_courses
+from frontend.window import setup_window
+
 
 
 def add_placeholder(entry, placeholder):
@@ -213,28 +215,46 @@ def create_academic_section(parent):
     admission_type.bind( "<<ComboboxSelected>>", update_year_levels)
 
     # Course dropdown
-    tk.Label(frame, text="Course", bg="#FFFFFF", fg="#344054",
-                font=("Arial", 9, "bold")).grid(
-        row=0, column=2, sticky="w", padx=10, pady=(5, 0)
+    # Course dropdown
+    tk.Label(
+        frame,
+        text="Course",
+        bg="#FFFFFF",
+        fg="#344054",
+        font=("Arial", 9, "bold")
+    ).grid(
+        row=0, column=2,
+        sticky="w",
+        padx=10, pady=(5, 0)
     )
+
+    # Load courses from Course Manager
+    courses = get_all_courses()
+
+    # Map the displayed course to its stored course name
+    course_lookup = {
+        f"{code} - {name}": name
+        for course_id, code, name in courses
+    }
+
     course = ttk.Combobox(
         frame,
-        values=(
-            "BS Computer Science",
-            "BS Information Technology",
-            "BS Information Systems"
-        ),
+        values=list(course_lookup.keys()),
         state="readonly",
         width=27
     )
+
     course.grid(
-        row=1, column=2, sticky="ew", padx=10, pady=(5, 0)
+        row=1, column=2,
+        sticky="ew",
+        padx=10, pady=(5, 0)
     )
 
     return {
-        "admission_type":admission_type,
-        "year_level":year_level,
-        "course":course
+    "admission_type": admission_type,
+    "year_level": year_level,
+    "course": course,
+    "course_lookup": course_lookup
     }
 
 def is_valid_contact_number(number):
@@ -314,7 +334,11 @@ def show_students():
         emergency_contact_number = get_field_value(contact_fields["emergency_contact_number"], "09XXXXXXXXX")
         admission_type = academic_fields["admission_type"].get()
         year_level = academic_fields["year_level"].get()
-        course = academic_fields["course"].get()
+        
+        selected_course = academic_fields["course"].get()
+        course = academic_fields["course_lookup"].get(
+            selected_course, ""
+        )
 
         if not first_name:
             messagebox.showerror(
