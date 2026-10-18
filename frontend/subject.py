@@ -27,38 +27,87 @@ def show_subjects(parent=None):
 
     setup_window(window, "Subject Management")
 
-    # Subject details
-    form = ttk.LabelFrame(
-        window,
-        text="Subject Information",
-        padding=15
-    )
-    form.pack(fill="x", padx=15, pady=15)
+    window.configure(bg="#F3F6FC")
 
-    ttk.Label(form, text="Subject Code").grid(
+    title_label = tk.Label(
+            window,
+            text="SUBJECTS MANAGER",
+            font=("Arial", 12, "bold"),
+            bg="#F3F6FC",
+            fg="#1E293B",
+            anchor="w"
+        )
+    title_label.pack(fill="x", padx=20, pady=(15, 10))
+
+    # Subject details
+    form = tk.LabelFrame(
+        window,
+        text="  Add/Edit Subjects  ",
+        padx=10,
+        pady=8,
+        bg="#FFFFFF",
+        fg="#1E293B",
+        font=("Arial", 10, "bold"),
+        relief="flat",
+        bd=1,
+        highlightbackground="#D8E1EA",
+        highlightthickness=1
+    )
+    form.pack(fill="x", padx=20, pady=5)
+
+    tk.Label(form, text="Subject Code", bg="#FFFFFF").grid(
         row=0, column=0, sticky="w", padx=5, pady=5
     )
     code_entry = ttk.Entry(form, width=25)
     code_entry.grid(row=0, column=1, padx=5, pady=5)
 
-    ttk.Label(form, text="Subject Name").grid(
-        row=0, column=2, sticky="w", padx=5, pady=5
+    # Subject Name
+    name_frame = tk.Frame(form, bg="#FFFFFF")
+    name_frame.grid(
+        row=0,
+        column=2,
+        columnspan=2,
+        sticky="w",
+        padx=5,
+        pady=5
     )
-    name_entry = ttk.Entry(form, width=30)
-    name_entry.grid(row=0, column=3, padx=5, pady=5)
 
-    ttk.Label(form, text="Units").grid(
+    tk.Label(
+        name_frame,
+        text="Subject Name",
+        bg="#FFFFFF"
+    ).pack(side="left", padx=(0, 10))
+
+    name_entry = ttk.Entry(name_frame, width=30)
+    name_entry.pack(side="left")
+
+    tk.Label(form, text="Units", bg="#FFFFFF").grid(
         row=1, column=0, sticky="w", padx=5, pady=5
     )
     units_entry = ttk.Entry(form, width=25)
     units_entry.grid(row=1, column=1, padx=5, pady=5)
 
-    ttk.Label(form, text="Year Level").grid(
-        row=1, column=2, sticky="w", padx=5, pady=5
+    # Year Level
+    year_frame = tk.Frame(form, bg="#FFFFFF")
+    year_frame.grid(
+        row=1,
+        column=2,
+        columnspan=2,
+        sticky="w",
+        padx=5,
+        pady=5
     )
+
+    tk.Label(
+        year_frame,
+        text="Year Level",
+        bg="#FFFFFF"
+    ).pack(side="left", padx=(0, 31))
+
     year_var = tk.StringVar(value="1st Year")
+
     year_combo = ttk.Combobox(
-        form,
+        year_frame,
         textvariable=year_var,
         values=(
             "1st Year",
@@ -67,11 +116,11 @@ def show_subjects(parent=None):
             "4th Year"
         ),
         state="readonly",
-        width=27
+        width=20
     )
-    year_combo.grid(row=1, column=3, padx=5, pady=5)
+    year_combo.pack(side="left")
 
-    ttk.Label(form, text="Semester").grid(
+    tk.Label(form, text="Semester", bg="#FFFFFF").grid(
         row=2, column=0, sticky="w", padx=5, pady=5
     )
     semester_var = tk.StringVar(value="1st Semester")
@@ -85,12 +134,20 @@ def show_subjects(parent=None):
     semester_combo.grid(row=2, column=1, padx=5, pady=5)
 
     # Table of saved subjects
-    table_frame = ttk.LabelFrame(
-        window,
-        text="Subject List",
-        padding=10
-    )
-    table_frame.pack(fill="both", expand=True, padx=15, pady=(0, 15))
+    table_frame = tk.LabelFrame(
+            window,
+            text="  Subject Information  ",
+            padx=10,
+            pady=8,
+            bg="#FFFFFF",
+            fg="#1E293B",
+            font=("Arial", 10, "bold"),
+            relief="flat",
+            bd=1,
+            highlightbackground="#D8E1EA",
+            highlightthickness=1
+        )
+    table_frame.pack(fill="x", padx=20, pady=5)
 
     columns = (
         "id",
@@ -104,7 +161,8 @@ def show_subjects(parent=None):
     subject_table = ttk.Treeview(
         table_frame,
         columns=columns,
-        show="headings"
+        show="headings",
+        height=15
     )
 
     headings = {
@@ -311,48 +369,73 @@ def show_subjects(parent=None):
                 parent=window
             )
 
-    button_frame = ttk.Frame(form)
+    button_frame = tk.Frame(form, bg="#FFFFFF")
     button_frame.grid(
         row=2, column=2, columnspan=2,
         sticky="e", padx=5, pady=5
     )
 
-    save_button = ttk.Button(
+    save_button = tk.Button(
         button_frame,
         text="Add Subject",
+        width=12,
+        font=("Arial", 8, "bold"),
+        bg="#2563EB",
+        fg="#FFFFFF",
+        relief="flat",
+        cursor="hand2",
         command=save_subject
     )
     save_button.pack(side="left", padx=5)
 
-    ttk.Button(
+    tk.Button(
         button_frame,
         text="Edit Selected",
+        width=12,
+        font=("Arial", 8, "bold"),
+        bg="#0F766E",
+        fg="#FFFFFF",
+        relief="flat",
+        cursor="hand2",
         command=edit_subject
     ).pack(side="left", padx=5)
 
-    ttk.Button(
+    tk.Button(
+        button_frame,
+        text="Cancel Edit / Clear",
+        width=14,
+        font=("Arial", 8, "bold"),
+        bg="#0F766E",
+        fg="#FFFFFF",
+        relief="flat",
+        cursor="hand2",
+        command=clear_form
+    ).pack(side="left", padx=5)
+
+    tk.Button(
         button_frame,
         text="Delete Selected",
+        width=12,
+        font=("Arial", 8, "bold"),
+        bg="#DC2626",
+        fg="#FFFFFF",
+        relief="flat",
+        cursor="hand2",
         command=remove_subject
     ).pack(side="left", padx=5)
 
-    ttk.Button(
-        button_frame,
-        text="Refresh",
-        command=load_subjects
-    ).pack(side="left", padx=5)
-
-    ttk.Button(
+    tk.Button(
         button_frame,
         text="Close",
+        width=5,
+        font=("Arial", 8, "bold"),
+        bg="#E2E8F0",
+        fg="#1E293B",
+        relief="flat",
+        cursor="hand2",
         command=window.destroy
     ).pack(side="left", padx=5)
 
-    ttk.Button(
-        button_frame,
-        text="Cancel Edit / Clear",
-        command=clear_form
-    ).pack(side="left", padx=5)
 
     load_subjects()
     code_entry.focus_set()
