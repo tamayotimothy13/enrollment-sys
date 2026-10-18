@@ -26,13 +26,16 @@ def show_courses(parent=None):
     window = tk.Toplevel(parent)
     setup_window(window, "Courses")
 
-    main = tk.Frame(window, padx=20, pady=20)
+    window.configure(bg="#F3F6FC")
+
+    main = tk.Frame(window, padx=20, pady=20, bg="#F3F6FC")
     main.pack(fill="both", expand=True)
 
     tk.Label(
         main,
         text="Course Management",
-        font=("Arial", 18, "bold")
+        font=("Arial", 14, "bold"),
+        bg="#F3F6FC"
     ).pack(anchor="w", pady=(0, 15))
 
     # Course form
@@ -40,22 +43,23 @@ def show_courses(parent=None):
         main,
         text="Add New Course",
         padx=10,
-        pady=10
+        pady=10, 
+        bg="#FFFFFF"
     )
     form.pack(fill="x", pady=(0, 15))
 
-    tk.Label(form, text="Course Code").grid(
-        row=0, column=0, sticky="w", padx=5, pady=5
+    tk.Label(form, text="Course Code", bg="#FFFFFF").grid(
+        row=0, column=0, sticky="w", padx=5, pady=5,
     )
 
-    code_entry = tk.Entry(form, width=25)
+    code_entry = ttk.Entry(form, width=30)
     code_entry.grid(row=0, column=1, padx=5, pady=5)
 
-    tk.Label(form, text="Course Name").grid(
+    tk.Label(form, text="Course Name", bg="#FFFFFF").grid(
         row=1, column=0, sticky="w", padx=5, pady=5
     )
 
-    name_entry = tk.Entry(form, width=35)
+    name_entry = ttk.Entry(form, width=30)
     name_entry.grid(row=1, column=1, padx=5, pady=5)
 
     # Course list
@@ -175,26 +179,59 @@ def show_courses(parent=None):
     tk.Button(
         form,
         text="Add Course",
-        command=save_course
+        command=save_course,
+        width=10,
+        font=("Arial", 9, "bold"),
+        bg="#2563EB",
+        fg="#FFFFFF",
+        relief="flat",
+        cursor="hand2",
     ).grid(row=2, column=1, sticky="e", padx=5, pady=8)
 
-    tk.Button(
-        main,
-        text="Remove Course",
-        command=remove_course
-    ).pack(side="left", padx=5)
-        
-    tk.Button(
-        main,
-        text="Manage Subjects",
-        command=manage_subjects
-    ).pack(anchor="w", pady=(10, 0))
+        # Button row
+    button_frame = tk.Frame(main, bg="#F3F6FC")
+    button_frame.pack(fill="x", pady=(10, 0))
 
-    ttk.Button(
-        main,
+    # Left side
+    left_frame = tk.Frame(button_frame, bg="#F3F6FC")
+    left_frame.pack(side="left")
+
+    tk.Button(
+        left_frame,
+        text="Remove Course",
+        width=12,
+        font=("Arial", 9, "bold"),
+        bg="#DC2626",
+        fg="#FFFFFF",
+        relief="flat",
+        cursor="hand2",
+        command=remove_course
+    ).pack(side="left", padx=(0, 5))
+
+    tk.Button(
+        left_frame,
+        text="Manage Subjects",
+        width=14,
+        font=("Arial", 9, "bold"),
+        bg="#0F766E",
+        fg="#FFFFFF",
+        relief="flat",
+        cursor="hand2",
+        command=manage_subjects
+    ).pack(side="left", padx=5)
+
+    # Right side
+    tk.Button(
+        button_frame,
         text="Close",
+        width=5,
+        font=("Arial", 9, "bold"),
+        bg="#E2E8F0",
+        fg="#1E293B",
+        relief="flat",
+        cursor="hand2",
         command=window.destroy
-    ).pack(anchor="e", pady=(10, 0))
+    ).pack(side="right")
 
     load_courses()
 
@@ -214,18 +251,32 @@ def open_course_subjects(
         window,
         f"Subjects - {course_code}"
     )
+    
+    window.configure(bg="#F3F6FC")
 
-    main = ttk.Frame(window, padding=15)
+    main = tk.Frame(
+        window,
+        bg="#F3F6FC",
+        padx=15,
+        pady=15
+    )
     main.pack(fill="both", expand=True)
 
-    ttk.Label(
+    tk.Label(
         main,
         text=f"{course_code} - {course_name}",
-        font=("Arial", 16, "bold")
+        font=("Arial", 14, "bold"),
+        bg="#F3F6FC",
     ).pack(anchor="w", pady=(0, 10))
 
-    form = ttk.LabelFrame(
-        main, text="Assign Existing Subject", padding=10
+    form = tk.LabelFrame(
+        main,
+        text="Assign Existing Subject",
+        bg="#FFFFFF",
+        padx=10,
+        pady=10,
+        relief="solid",
+        bd=1
     )
     form.pack(fill="x", pady=(0, 10))
         
@@ -400,21 +451,39 @@ def open_course_subjects(
                     parent=window
                 )
 
-    ttk.Button(
+    tk.Button(
         form,
         text="Assign Subject",
-        command=assign_subject
+        width=12,
+        font=("Arial", 8, "bold"),
+        bg="#2563EB",
+        fg="#FFFFFF",
+        relief="flat",
+        cursor="hand2",
+        command=assign_subject,
     ).pack(side="left", padx=5)
 
-    ttk.Button(
+    tk.Button(
         main,
         text="Remove Selected Assignment",
+        width=24,
+        font=("Arial", 9, "bold"),
+        bg="#DC2626",
+        fg="#FFFFFF",
+        relief="flat",
+        cursor="hand2",
         command=remove_assignment
     ).pack(anchor="w")
 
-    ttk.Button(
+    tk.Button(
         main,
         text="Close",
+        width=5,
+        font=("Arial", 9, "bold"),
+        bg="#E2E8F0",
+        fg="#1E293B",
+        relief="flat",
+        cursor="hand2",
         command=window.destroy
     ).pack(anchor="e", pady=(10, 0))
     
