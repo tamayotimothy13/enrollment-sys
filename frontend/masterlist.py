@@ -48,7 +48,7 @@ def show_masterlist():
     # Container for the search entry and clear button
     search_box, search_entry = create_search_box(search_frame)
     search_box.pack(side="right", padx=8)
-    
+
     # =========================
     # TABLE CARD
     # =========================
@@ -105,24 +105,6 @@ def show_masterlist():
         pady=10
     )
     scrollbar.pack(side="right", fill="y", pady=10, padx=(0, 10))
-
-    def load_students():
-        for item in tree.get_children():
-            tree.delete(item)
-
-        students = get_all_students()
-
-        if students:
-            empty_label.place_forget()
-
-            for student in students:
-                tree.insert("", "end", values=student)
-        else:
-            empty_label.place(
-                relx=0.5,
-                rely=0.5,
-                anchor="center"
-            )
     # =========================
     # EMPTY STATE
     # =========================
@@ -136,8 +118,6 @@ def show_masterlist():
         fg=MUTED_COLOR
     )
     empty_label.place(relx=0.5, rely=0.5, anchor="center")
-
-    load_students()
 
 
     def handle_delete():
@@ -168,7 +148,7 @@ def show_masterlist():
             return
 
         if delete_student(student_id):
-            load_students()
+            search_students()
 
             messagebox.showinfo(
                 "Success",
@@ -325,10 +305,6 @@ def show_masterlist():
     def search_students():
         query = search_entry.get().strip()
 
-        # Ignore the placeholder text
-        if query.lower() == "search students...":
-            query = ""
-
         students = get_all_students()
 
         # Filter records using the search query
@@ -359,7 +335,7 @@ def show_masterlist():
 
     def clear_search():
         search_entry.delete(0, tk.END)
-        load_students()
+        search_students()
 
     # Live search while typing
     search_entry.bind("<KeyRelease>", lambda event: search_students())
@@ -367,6 +343,8 @@ def show_masterlist():
     # Connect the × button to clear the search
     clear_button = search_box.winfo_children()[1]
     clear_button.configure(command=clear_search)
+
+    search_students()
 
     def edit_student(student_id):
         student = get_student_by_id(student_id)
@@ -554,7 +532,7 @@ def show_masterlist():
                 if isinstance(child, tk.Toplevel) and child.title() == "Student Details":
                     child.destroy()
 
-            load_students()
+            search_students()
 
         button_frame = tk.Frame(form, bg=WHITE)
         button_frame.grid(
