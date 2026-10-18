@@ -24,6 +24,7 @@ def setup_window(window, title):
 def create_search_box(parent, search_command=None, clear_command=None):
     search_box = tk.Frame(
         parent,
+        bg="#FFFFFF",
         relief="solid",
         bd=1
     )
@@ -41,6 +42,7 @@ def create_search_box(parent, search_command=None, clear_command=None):
         search_box,
         text="×",
         font=("Arial", 12),
+        bg="#FFFFFF",
         relief="flat",
         bd=0,
         cursor="hand2",

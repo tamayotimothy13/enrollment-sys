@@ -1,6 +1,5 @@
 import sqlite3
 
-
 DATABASE_PATH = "database/database.db"
 
 def create_enrollment_tables():
@@ -353,6 +352,36 @@ def get_all_enrollments():
     finally:
         connection.close()
 
+
+def delete_enrollment(enrollment_id):
+    connection = sqlite3.connect(DATABASE_PATH)
+
+    try:
+        # Enable foreign-key enforcement for this connection.
+        connection.execute("PRAGMA foreign_keys = ON")
+        cursor = connection.cursor()
+
+        # Delete the selected enrollment.
+        # Its linked enrollment_subjects rows are deleted automatically.
+        cursor.execute("""
+            DELETE FROM enrollments
+            WHERE enrollment_id = ?
+        """, (enrollment_id,))
+
+        if cursor.rowcount == 0:
+            connection.rollback()
+            return False
+
+        connection.commit()
+        return True
+
+    except sqlite3.Error as error:
+        connection.rollback()
+        print("Could not delete enrollment:", error)
+        return False
+
+    finally:
+        connection.close()
 
 if __name__ == "__main__":
     print("\n--- ALL ENROLLMENTS ---")

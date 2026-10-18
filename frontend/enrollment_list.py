@@ -4,7 +4,8 @@ from tkinter import ttk, messagebox
 from frontend.window import setup_window, create_search_box
 from backend.enrollments import (
     get_all_enrollments,
-    get_enrollment_details
+    get_enrollment_details,
+    delete_enrollment
 )
 
 
@@ -12,17 +13,20 @@ def show_enrollment_list(parent=None):
     window = tk.Toplevel(parent) if parent else tk.Tk()
     setup_window(window, "Enrollment List")
 
-    main = tk.Frame(window, padx=15, pady=15)
+    window.configure(bg="#F3F6FC")
+
+    main = tk.Frame(window, padx=15, pady=15, bg="#F3F6FC")
     main.pack(fill="both", expand=True)
     
     # Enrollment Records title and search
-    title_frame = tk.Frame(main)
+    title_frame = tk.Frame(main, bg="#F3F6FC")
     title_frame.pack(fill="x", pady=(0, 10))
 
     tk.Label(
         title_frame,
         text="Enrollment Records",
-        font=("Arial", 13, "bold")
+        font=("Arial", 13, "bold"),
+        bg="#F3F6FC"
     ).pack(side="left")
 
     search_box, search_entry = create_search_box(title_frame)
@@ -80,7 +84,8 @@ def show_enrollment_list(parent=None):
     tk.Label(
         main,
         text="Enrolled Subjects",
-        font=("Arial", 13, "bold")
+        font=("Arial", 13, "bold"), 
+        bg="#F3F6FC"
     ).pack(anchor="w", pady=(15, 5))
 
     subject_tree = ttk.Treeview(
@@ -103,7 +108,8 @@ def show_enrollment_list(parent=None):
     total_label = tk.Label(
         main,
         text="Total Units: 0",
-        font=("Arial", 10, "bold")
+        font=("Arial", 10, "bold"), 
+        bg="#F3F6FC"
     )
     total_label.pack(anchor="e", pady=5)
 
@@ -231,15 +237,88 @@ def show_enrollment_list(parent=None):
         total_label.config(
             text=f"Total Units: {total_units}"
         )
-
     tree.bind("<<TreeviewSelect>>", show_selected_subjects)
 
-    button_frame = tk.Frame(main)
+    def delete_selected_enrollment():
+        selected = tree.selection()
+
+        if not selected:
+            messagebox.showwarning(
+                "No Selection",
+                "Please select an enrollment to delete.",
+                parent=window
+            )
+            return
+
+        values = tree.item(selected[0], "values")
+        enrollment_id = values[0]
+        student_name = values[2]
+
+        confirm = messagebox.askyesno(
+            "Confirm Deletion",
+            f"Delete the enrollment for {student_name}?\n\n"
+            "This action cannot be undone.",
+            parent=window
+        )
+
+        if not confirm:
+            return
+
+        try:
+            success = delete_enrollment(enrollment_id)
+
+            if success:
+                load_enrollments()
+
+                for item in subject_tree.get_children():
+                    subject_tree.delete(item)
+
+                total_label.config(text="Total Units: 0")
+
+                messagebox.showinfo(
+                    "Success",
+                    "Enrollment deleted successfully.",
+                    parent=window
+                )
+            else:
+                messagebox.showerror(
+                    "Deletion Failed",
+                    "The enrollment could not be deleted. "
+                    "It may no longer exist, or a database error occurred.",
+                    parent=window
+                )
+
+        except Exception as error:
+            messagebox.showerror(
+                "Deletion Failed",
+                f"An unexpected error occurred:\n{error}",
+                parent=window
+            )
+
+    button_frame = tk.Frame(main, bg="#F3F6FC")
     button_frame.pack(fill="x", pady=(10, 0))
 
     tk.Button(
         button_frame,
+        text="Delete Enrollment",
+        width=16,
+        font=("Arial", 10, "bold"),
+        bg="#DC2626",
+        fg="white",
+        relief="flat",
+        cursor="hand2",
+        command=delete_selected_enrollment
+    ).pack(side="left")
+
+    tk.Button(
+        button_frame,
         text="Close",
+        width=12,
+        font=("Arial", 10, "bold"),
+        bg="#E2E8F0",
+        fg="#1E293B",
+        relief="flat",
+        cursor="hand2",
         command=window.destroy
     ).pack(side="right")
 
