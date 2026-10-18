@@ -153,6 +153,7 @@ def get_available_subjects(student_id, semester):
                 subjects.subject_id,
                 subjects.subject_code,
                 subjects.subject_name,
+                course_subjects.year_level,
                 subjects.units
             FROM courses
             JOIN course_subjects

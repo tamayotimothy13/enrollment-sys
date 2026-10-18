@@ -151,7 +151,7 @@ def show_enrollment(parent=None):
     subject_frame = tk.Frame(main)
     subject_frame.pack(fill="both", expand=True)
 
-    subject_columns = ("select", "code", "name", "units")
+    subject_columns = ("select", "code", "name", "year_level", "units")
 
     subject_table = ttk.Treeview(
         subject_frame,
@@ -164,11 +164,13 @@ def show_enrollment(parent=None):
     subject_table.heading("select", text="Select")
     subject_table.heading("code", text="Subject Code")
     subject_table.heading("name", text="Subject Name")
+    subject_table.heading("year_level", text="Year Level")
     subject_table.heading("units", text="Units")
 
     subject_table.column("select", width=55, anchor="center")
     subject_table.column("code", width=110, anchor="w")
-    subject_table.column("name", width=300, anchor="w")
+    subject_table.column("name", width=250, anchor="w")
+    subject_table.column("year_level", width=100, anchor="center")
     subject_table.column("units", width=60, anchor="center")
 
     subject_scrollbar = ttk.Scrollbar(
@@ -213,7 +215,7 @@ def show_enrollment(parent=None):
                 values = subject_table.item(item_id, "values")
                 subject_table.item(
                     item_id,
-                    values=("☑", values[1], values[2], values[3])
+                    values=("☑", values[1], values[2], values[3], values[4])
                 )
 
         update_total_units()
@@ -228,7 +230,7 @@ def show_enrollment(parent=None):
                 values = subject_table.item(item_id, "values")
                 subject_table.item(
                     item_id,
-                    values=("☐", values[1], values[2], values[3])
+                    values=("☐", values[1], values[2], values[3], values[4])
                 )
 
         update_total_units()
@@ -254,7 +256,8 @@ def show_enrollment(parent=None):
                         "☑" if selected else "☐",
                         values[1],
                         values[2],
-                        values[3]
+                        values[3],
+                        values[4]
                     )
                 )
                 break
@@ -286,7 +289,7 @@ def show_enrollment(parent=None):
         if not subjects:
             return
 
-        for subject_id, code, name, units in subjects:
+        for subject_id, code, name, year_level, units in subjects:
             subject_id = str(subject_id)
             subject_vars.append((subject_id, units, False))
 
@@ -294,7 +297,7 @@ def show_enrollment(parent=None):
                 "",
                 "end",
                 iid=subject_id,
-                values=("☐", code, name, units)
+                values=("☐", code, name, year_level, units)
             )
 
     
@@ -518,8 +521,6 @@ def show_enrollment(parent=None):
         command=deselect_all_subjects
     ).pack(side="left")
 
-    "#0F766E"
-
     tk.Button(
         subject_button_frame,
         text="Close",
@@ -534,7 +535,7 @@ def show_enrollment(parent=None):
 
     tk.Button(
         subject_button_frame,
-        text="Save Enrollment",
+        text="Enroll Student",
         width=14,
         font=("Arial", 10, "bold"),
         bg=PRIMARY_COLOR,
