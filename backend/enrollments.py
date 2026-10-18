@@ -194,12 +194,51 @@ def get_available_subjects(student_id, semester):
             """
             parameters.append(year_name)
 
+        cursor.execute(query, parameters)
+        return cursor.fetchall()
+
     except sqlite3.Error as error:
         print("Database error:", error)
         return []
 
     finally:
         connection.close()
+
+
+def get_unenrolled_students(academic_year, semester):
+    connection = sqlite3.connect(DATABASE_PATH)
+
+    try:
+        cursor = connection.cursor()
+
+        cursor.execute("""
+            SELECT
+                students.student_id,
+                students.first_name,
+                students.last_name,
+                students.course,
+                students.year_level,
+                students.email
+            FROM students
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM enrollments
+                WHERE enrollments.student_id = students.student_id
+                  AND enrollments.academic_year = ?
+                  AND enrollments.semester = ?
+            )
+            ORDER BY students.last_name ASC
+        """, (academic_year, semester))
+
+        return cursor.fetchall()
+
+    except sqlite3.Error as error:
+        print("Database error:", error)
+        return None
+
+    finally:
+        connection.close()
+
 
 def save_enrollment(student_id, academic_year, semester, subject_ids):
     connection = sqlite3.connect(DATABASE_PATH)

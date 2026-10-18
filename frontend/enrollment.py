@@ -2,10 +2,10 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 
 from frontend.window import setup_window
-from backend.students import get_all_students
 from backend.enrollments import (
     get_available_subjects,
-    save_enrollment
+    save_enrollment,
+    get_unenrolled_students
 )
 
 
@@ -23,24 +23,16 @@ def show_enrollment(parent=None):
     ).pack(anchor="w", pady=(0, 15))
 
     # Student selection
+        # Student selection
     tk.Label(main, text="Select Student").pack(anchor="w")
 
-    students = get_all_students()
     student_options = {}
+    student_var = tk.StringVar(value="Select a student...")
 
-    for student in students:
-        student_id, first_name, last_name, course, year_level, email = student
-        display = (
-            f"{student_id} - {first_name} {last_name} "
-            f"({course}, Year {year_level})"
-        )
-        student_options[display] = student_id
-
-    student_var = tk.StringVar()
     student_combo = ttk.Combobox(
         main,
         textvariable=student_var,
-        values=list(student_options.keys()),
+        values=("Select a student...",),
         state="readonly",
         width=55
     )
@@ -138,16 +130,76 @@ def show_enrollment(parent=None):
 
             subject_vars.append((var, subject_id, units))
 
-    def on_semester_change(event=None):
+    def refresh_student_options(event=None):
+        academic_year = academic_year_var.get().strip()
+        semester = semester_var.get()
+
+        student_options.clear()
+
+        # Clear the current selection and subject list.
+        student_var.set("Select a student...")
+        student_combo.set("Select a student...")
+
+        if not academic_year or not semester:
+            student_combo["values"] = ("Select a student...",)
+            load_available_subjects()
+            return
+
+        students = get_unenrolled_students(
+            academic_year,
+            semester
+        )
+
+        if students is None:
+            student_combo["values"] = ("Select a student...",)
+            load_available_subjects()
+
+            messagebox.showerror(
+                "Database Error",
+                "Could not load available students. "
+                "Check the terminal for details.",
+                parent=window
+            )
+            return
+
+        for student in students:
+            student_id, first_name, last_name, course, year_level, email = student
+
+            display = (
+                f"{student_id} - {first_name} {last_name} "
+                f"({course}, Year {year_level})"
+            )
+
+            student_options[display] = student_id
+
+        student_combo["values"] = (
+            "Select a student...",
+            *student_options.keys()
+        )
+
         load_available_subjects()
+
+    def on_semester_change(event=None):
+        refresh_student_options()
 
     student_combo.bind(
         "<<ComboboxSelected>>",
         load_available_subjects
     )
+
     semester_combo.bind(
         "<<ComboboxSelected>>",
-        on_semester_change
+        refresh_student_options
+    )
+
+    academic_year_entry.bind(
+        "<Return>",
+        refresh_student_options
+    )
+
+    academic_year_entry.bind(
+        "<FocusOut>",
+        refresh_student_options
     )
 
     def enroll_student():
@@ -199,8 +251,8 @@ def show_enrollment(parent=None):
                 f"Enrollment ID: {enrollment_id}",
                 parent=window
             )
-
-            load_available_subjects()
+            refresh_student_options()
+            
         else:
             messagebox.showerror(
                 "Enrollment Failed",
@@ -222,12 +274,4 @@ def show_enrollment(parent=None):
         command=window.destroy
     ).pack(anchor="e")
 
-    if students:
-        student_combo.current(0)
-        load_available_subjects()
-    else:
-        messagebox.showinfo(
-            "No Students",
-            "Add a student before creating an enrollment.",
-            parent=window
-        )
+    refresh_student_options()

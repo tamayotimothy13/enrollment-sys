@@ -2,7 +2,7 @@ import tkinter as tk
 import re
 from tkinter import ttk
 from tkinter import messagebox
-from backend.students import add_student
+from backend.students import add_student, find_students_by_name
 from frontend.window import setup_window
 from datetime import datetime
 
@@ -203,6 +203,42 @@ def show_students():
     contact_fields = create_contact_section(window)
     academic_fields = create_academic_section(window)
 
+
+    def reset_form():
+        personal_placeholders = {
+            "first_name": "e.g  Juan",
+            "middle_initial": "e.g  J.",
+            "last_name": "e.g  Dela Cruz",
+            "prefix": "e.g  Jr, II",
+            "birthday": "YYYY-MM-DD",
+            "birth_place": "e.g  Marikina City"
+        }
+
+        contact_placeholders = {
+            "address": "House/Unit/Lot No., Street Name, Subdivision/Village, Barangay, City",
+            "email": "example@email.com",
+            "contact_number": "09XXXXXXXXX",
+            "emergency_contact_number": "09XXXXXXXXX"
+        }
+
+        # Clear text fields and restore placeholders.
+        for name, entry in personal_fields.items():
+            entry.delete(0, tk.END)
+            add_placeholder(entry, personal_placeholders[name])
+
+        for name, entry in contact_fields.items():
+            entry.delete(0, tk.END)
+            add_placeholder(entry, contact_placeholders[name])
+
+        # Reset academic dropdowns.
+        academic_fields["admission_type"].set("")
+        academic_fields["year_level"]["values"] = (
+            "1st Year", "2nd Year", "3rd Year", "4th Year"
+        )
+        academic_fields["year_level"].set("")
+        academic_fields["course"].set("")
+        
+
     def save_student():
         first_name = get_field_value(personal_fields["first_name"], "e.g  Juan")
         middle_initial = get_field_value(personal_fields["middle_initial"], "e.g  J.")
@@ -298,8 +334,35 @@ def show_students():
                 parent=window
             )
             return
-
         
+        # Check for students with the same first and last name.
+        matching_students = find_students_by_name(
+                first_name,
+                last_name
+            )
+
+        if matching_students is None:
+            messagebox.showerror(
+                "Database Error",
+                "Could not check for existing students. "
+                "Please try again.",
+                parent=window
+            )
+            return
+
+        if matching_students:
+            confirm = messagebox.askyesno(
+                "Possible Duplicate Student",
+                f"A student named {first_name} {last_name} "
+                "already exists.\n\n"
+                "This might be a different person with the same name.\n\n"
+                "Do you want to continue saving this student?",
+                parent=window
+            )
+
+            if not confirm:
+                return
+
         success = add_student(
             first_name=first_name,
             middle_name=middle_initial,
@@ -331,29 +394,7 @@ def show_students():
         )
 
         # Clear text fields and restore placeholders.
-        personal_placeholders = {
-            "first_name": "e.g  Juan",
-            "middle_initial": "e.g  J.",
-            "last_name": "e.g  Dela Cruz",
-            "prefix": "e.g  Jr, II",
-            "birthday": "YYYY-MM-DD",
-            "birth_place": "e.g  Marikina City"
-        }
-
-        contact_placeholders = {
-            "address": "House/Unit/Lot No., Street Name, Subdivision/Village, Barangay, City",
-            "email": "example@email.com",
-            "contact_number": "09XXXXXXXXX",
-            "emergency_contact_number": "09XXXXXXXXX"
-        }
-
-        for name, entry in personal_fields.items():
-            entry.delete(0, tk.END)
-            add_placeholder(entry, personal_placeholders[name])
-
-        for name, entry in contact_fields.items():
-            entry.delete(0, tk.END)
-            add_placeholder(entry, contact_placeholders[name])
+        reset_form()
 
         # Reset academic dropdowns.
         academic_fields["admission_type"].set("")
@@ -372,6 +413,13 @@ def show_students():
         command=window.destroy
     )
     close_button.pack(side="left", padx=5)
+
+    reset_button = tk.Button(
+        button_frame,
+        text="Reset",
+        command=reset_form
+    )
+    reset_button.pack(side="left", padx=5)
 
     save_button = tk.Button(
         button_frame,
