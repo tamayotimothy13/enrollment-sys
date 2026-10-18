@@ -1,7 +1,6 @@
 import tkinter as tk
 import re
-from tkinter import ttk
-from tkinter import messagebox
+from tkinter import ttk, messagebox
 from backend.students import add_student, find_students_by_name
 from frontend.window import setup_window
 from datetime import datetime
@@ -34,23 +33,55 @@ def get_field_value(entry, placeholder):
     return value
 
 def create_field(parent, label_text, row, column, width=30):
-    label = tk.Label(parent, text=label_text).grid(
-        row=row, column=column, sticky="w", padx=10, pady=(5,0)
+    tk.Label(
+        parent,
+        text=label_text,
+        bg="#FFFFFF",
+        fg="#344054",
+        font=("Arial", 9, "bold")
+    ).grid(
+        row=row,
+        column=column,
+        sticky="w",
+        padx=10,
+        pady=(5, 0)
     )
     
-    entry = tk.Entry(parent, width=width)
+    entry = tk.Entry(
+        parent,
+        width=width,
+        bg="#F8FAFC",
+        fg="#182230",
+        insertbackground="#087E8B",
+        relief="flat",
+        highlightthickness=1,
+        highlightbackground="#D8E1EA",
+        highlightcolor="#087E8B",
+        font=("Arial", 10)
+    ) 
     entry.grid(
-        row=row+1, column=column, sticky="ew", padx=10, pady=(5,0)
+        row=row + 1,
+        column=column,
+        sticky="ew",
+        padx=10,
+        pady=(5, 7),
+        ipady=5
     )
-
     return entry
 
 def create_personal_section(parent):
     frame = tk.LabelFrame(
         parent,
-        text="Personal Information",
+        text="  Personal Information  ",
         padx=10,
-        pady=5
+        pady=8,
+        bg="#FFFFFF",
+        fg="#1E293B",
+        font=("Segoe UI", 10, "bold"),
+        relief="flat",
+        bd=1,
+        highlightbackground="#D8E1EA",
+        highlightthickness=1
     )
     frame.pack(fill="x", padx=20, pady=5)
 
@@ -83,11 +114,18 @@ def create_personal_section(parent):
 
 def create_contact_section(parent):
     frame = tk.LabelFrame(
-            parent,
-            text="Contact Information",
-            padx=10,
-            pady=5
-        )
+        parent,
+        text="  Contact Information  ",
+        padx=10,
+        pady=8,
+        bg="#FFFFFF",
+        fg="#1E293B",
+        font=("Arial", 10, "bold"),
+        relief="flat",
+        bd=1,
+        highlightbackground="#D8E1EA",
+        highlightthickness=1
+    )
     frame.pack(fill="x", padx=20, pady=5)
 
     address = create_field(frame, "Address", 0, 0, width=70)
@@ -111,17 +149,26 @@ def create_contact_section(parent):
 
 def create_academic_section(parent):
     frame = tk.LabelFrame(
-                parent,
-                text="Academic Information",
-                padx=10,
-                pady=5
-            )
+        parent,
+        text="  Academic Information  ",
+        padx=10,
+        pady=8,
+        bg="#FFFFFF",
+        fg="#1E293B",
+        font=("Arial", 10, "bold"),
+        relief="flat",
+        bd=1,
+        highlightbackground="#D8E1EA",
+        highlightthickness=1
+    )
     frame.pack(fill="x", padx=20, pady=5)
 
     # admission_type dropdown
-    tk.Label(frame, text="Admission Type").grid(
-        row=0, column=0, sticky="w", padx=10, pady=(5, 0)
+    tk.Label(frame, text="Admission Type", bg="#FFFFFF", fg="#344054",
+                 font=("Arial", 9, "bold")).grid(
+            row=0, column=0, sticky="w", padx=10, pady=(5, 0)
     )
+
     admission_type = ttk.Combobox(
         frame,
         values=("New Student", "Returning Student", "Transferee"),
@@ -133,9 +180,11 @@ def create_academic_section(parent):
     )
 
     # year level dropdown
-    tk.Label(frame, text="Year Level (this s.y.)").grid(
-        row=0, column=1, sticky="w", padx=10, pady=(5, 0)
+    tk.Label(frame, text="Year Level (this s.y.)", bg="#FFFFFF", fg="#344054",
+                 font=("Arial", 9, "bold")).grid(
+            row=0, column=1, sticky="w", padx=10, pady=(5, 0)
     )
+
     year_level = ttk.Combobox(
         frame,
         values=("1st Year", "2nd Year", "3rd Year", "4th Year"),
@@ -164,7 +213,8 @@ def create_academic_section(parent):
     admission_type.bind( "<<ComboboxSelected>>", update_year_levels)
 
     # Course dropdown
-    tk.Label(frame, text="Course").grid(
+    tk.Label(frame, text="Course", bg="#FFFFFF", fg="#344054",
+                font=("Arial", 9, "bold")).grid(
         row=0, column=2, sticky="w", padx=10, pady=(5, 0)
     )
     course = ttk.Combobox(
@@ -198,6 +248,18 @@ def show_students():
 
     window = tk.Toplevel()
     setup_window(window, "Students")
+
+    window.configure(bg="#F3F6FC")
+
+    title_label = tk.Label(
+        window,
+        text="ADD STUDENTS",
+        font=("Arial", 12, "bold"),
+        bg="#F3F6FC",
+        fg="#1E293B",
+        anchor="w"
+    )
+    title_label.pack(fill="x", padx=20, pady=(15, 10))
 
     personal_fields = create_personal_section(window)
     contact_fields = create_contact_section(window)
@@ -410,6 +472,12 @@ def show_students():
     close_button = tk.Button(
         button_frame,
         text="Close",
+        width=12,
+        font=("Arial", 10, "bold"),
+        bg="#E2E8F0",
+        fg="#1E293B",
+        relief="flat",
+        cursor="hand2",
         command=window.destroy
     )
     close_button.pack(side="left", padx=5)
@@ -417,6 +485,12 @@ def show_students():
     reset_button = tk.Button(
         button_frame,
         text="Reset",
+        width=12,
+        font=("Arial", 10, "bold"),
+        bg="#DC2626",
+        fg="#FFFFFF",
+        relief="flat",
+        cursor="hand2",
         command=reset_form
     )
     reset_button.pack(side="left", padx=5)
@@ -424,6 +498,12 @@ def show_students():
     save_button = tk.Button(
         button_frame,
         text="Save Student",
+        width=12,
+        font=("Arial", 10, "bold"),
+        bg="#2563EB",
+        fg="#FFFFFF",
+        relief="flat",
+        cursor="hand2",
         command=save_student
     )
     save_button.pack(side="left", padx=5)
