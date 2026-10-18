@@ -34,22 +34,57 @@ def show_enrollment(parent=None):
     )
     search_entry.pack(anchor="w", pady=(5, 8))
 
-    # Student selection
+    # Student selection table
     tk.Label(main, text="Select Student").pack(anchor="w")
 
     student_options = {}
     all_student_options = {}
 
-    student_var = tk.StringVar(value="Select a student...")
+    student_table_frame = tk.Frame(main)
+    student_table_frame.pack(fill="x", pady=(5, 12))
 
-    student_combo = ttk.Combobox(
-        main,
-        textvariable=student_var,
-        values=("Select a student...",),
-        state="readonly",
-        width=55
+    student_columns = (
+        "student_id",
+        "first_name",
+        "last_name",
+        "course",
+        "year_level",
+        "admission_type"
     )
-    student_combo.pack(anchor="w", pady=(5, 12))
+
+    student_table = ttk.Treeview(
+        student_table_frame,
+        columns=student_columns,
+        show="headings",
+        height=5,
+        selectmode="browse"
+    )
+
+    student_table.heading("student_id", text="Student ID")
+    student_table.heading("first_name", text="First Name")
+    student_table.heading("last_name", text="Last Name")
+    student_table.heading("course", text="Course")
+    student_table.heading("year_level", text="Year Level")
+    student_table.heading("admission_type", text="Admission Type")
+
+    student_table.column("student_id", width=100)
+    student_table.column("first_name", width=100)
+    student_table.column("last_name", width=100)
+    student_table.column("course", width=150)
+    student_table.column("year_level", width=90)
+    student_table.column("admission_type", width=110)
+
+    student_table.pack(side="left", fill="x", expand=True)
+
+    student_scrollbar = ttk.Scrollbar(
+        student_table_frame,
+        orient="vertical",
+        command=student_table.yview
+    )
+    student_table.configure(yscrollcommand=student_scrollbar.set)
+    student_scrollbar.pack(side="right", fill="y")
+
+    student_var = tk.StringVar(value="Select a student...")
 
     # Academic year
     tk.Label(main, text="Academic Year").pack(anchor="w")
@@ -134,11 +169,13 @@ def show_enrollment(parent=None):
         command=deselect_all_subjects
     ).pack(side="left")
 
+    
     def load_available_subjects(event=None):
         nonlocal selected_student_id
 
-        selected_display = student_var.get()
-        selected_student_id = student_options.get(selected_display)
+        selected = student_table.selection()
+
+        selected_student_id = None
 
         for widget in subject_frame.winfo_children():
             widget.destroy()
@@ -146,8 +183,13 @@ def show_enrollment(parent=None):
         subject_vars.clear()
         total_units_var.set("Total Units: 0")
 
-        if not selected_student_id:
+        if not selected:
             return
+
+        student_values = student_table.item(
+            selected[0], "values"
+        )
+        selected_student_id = student_values[0]
 
         subjects = get_available_subjects(
             selected_student_id,
@@ -174,48 +216,67 @@ def show_enrollment(parent=None):
             subject_vars.append((var, subject_id, units))
 
 
+    
     def filter_students(event=None):
         query = search_var.get().strip().lower()
 
         # Clear the current selection and subject list.
-        student_var.set("Select a student...")
-        student_combo.set("Select a student...")
-
-        student_options.clear()
-
-        # Find students matching the name or student ID.
-        for display, student_id in all_student_options.items():
-            if (
-                query in display.lower()
-                or query in student_id.lower()
-            ):
-                student_options[display] = student_id
-
-        student_combo["values"] = (
-            "Select a student...",
-            *student_options.keys()
+        student_table.selection_remove(
+            student_table.selection()
         )
-
         load_available_subjects()
 
-    search_entry.bind("<KeyRelease>", filter_students)
+        # Remove the currently displayed rows.
+        for item in student_table.get_children():
+            student_table.delete(item)
+
+        # Display matching students.
+        for student in all_student_options.values():
+            (
+                student_id,
+                first_name,
+                last_name,
+                course,
+                year_level,
+                admission_type
+            ) = student
+
+            searchable_text = (
+                f"{student_id} {first_name} {last_name} "
+                f"{course} {year_level} {admission_type}"
+            ).lower()
+
+            if query in searchable_text:
+                student_table.insert(
+                    "",
+                    "end",
+                    values=(
+                        student_id,
+                        first_name,
+                        last_name,
+                        course,
+                        year_level,
+                        admission_type
+                    )
+                )
 
 
+    
     def refresh_student_options(event=None):
         academic_year = academic_year_var.get().strip()
         semester = semester_var.get()
 
-        student_options.clear()
         all_student_options.clear()
         search_var.set("")
 
-        # Clear the current selection and subject list.
-        student_var.set("Select a student...")
-        student_combo.set("Select a student...")
+        # Clear the student table.
+        for item in student_table.get_children():
+            student_table.delete(item)
+
+        # Clear the subject list.
+        load_available_subjects()
 
         if not academic_year or not semester:
-            student_combo["values"] = ("Select a student...",)
-            load_available_subjects()
             return
 
         students = get_unenrolled_students(
@@ -224,9 +285,6 @@ def show_enrollment(parent=None):
         )
 
         if students is None:
-            student_combo["values"] = ("Select a student...",)
-            load_available_subjects()
-
             messagebox.showerror(
                 "Database Error",
                 "Could not load available students. "
@@ -236,25 +294,27 @@ def show_enrollment(parent=None):
             return
 
         for student in students:
-            student_id, first_name, last_name, course, year_level, email = student
+            (
+                student_id,
+                first_name,
+                last_name,
+                course,
+                year_level,
+                admission_type
+            ) = student
 
-            display = (
-                f"{student_id} - {first_name} {last_name} "
-                f"({course}, Year {year_level})"
-            )
-
-            all_student_options[display] = student_id
+            all_student_options[student_id] = student
 
         filter_students()
-
-        load_available_subjects()
-
-    def on_semester_change(event=None):
-        refresh_student_options()
-
-    student_combo.bind(
-        "<<ComboboxSelected>>",
+    
+    student_table.bind(
+        "<<TreeviewSelect>>",
         load_available_subjects
+    )
+
+    search_entry.bind(
+        "<KeyRelease>",
+        filter_students
     )
 
     semester_combo.bind(
@@ -272,8 +332,22 @@ def show_enrollment(parent=None):
         refresh_student_options
     )
 
+
     def enroll_student():
-        student_id = student_options.get(student_var.get())
+        selected = student_table.selection()
+
+        if not selected:
+            messagebox.showwarning(
+                "Missing Student",
+                "Please select a student.",
+                parent=window
+            )
+            return
+
+        student_id = student_table.item(
+            selected[0], "values"
+        )[0]
+        
         academic_year = academic_year_var.get().strip()
         semester = semester_var.get()
 

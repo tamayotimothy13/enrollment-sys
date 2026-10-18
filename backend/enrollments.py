@@ -218,7 +218,7 @@ def get_unenrolled_students(academic_year, semester):
                 students.last_name,
                 students.course,
                 students.year_level,
-                students.email
+                students.admission_type
             FROM students
             WHERE NOT EXISTS (
                 SELECT 1
