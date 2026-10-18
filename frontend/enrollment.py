@@ -83,6 +83,7 @@ def show_enrollment(parent=None):
         font=("Arial", 10, "bold")
     ).pack(anchor="w", pady=10)
 
+
     def update_total_units():
         total = sum(
             units
@@ -90,6 +91,35 @@ def show_enrollment(parent=None):
             if var.get()
         )
         total_units_var.set(f"Total Units: {total}")
+
+    
+    def select_all_subjects():
+        for var, subject_id, units in subject_vars:
+            var.set(True)
+
+        update_total_units()
+
+
+    def deselect_all_subjects():
+        for var, subject_id, units in subject_vars:
+            var.set(False)
+
+        update_total_units()
+
+    subject_button_frame = tk.Frame(main)
+    subject_button_frame.pack(anchor="w", pady=(5, 0))
+
+    tk.Button(
+        subject_button_frame,
+        text="Select All",
+        command=select_all_subjects
+    ).pack(side="left", padx=(0, 5))
+
+    tk.Button(
+        subject_button_frame,
+        text="Deselect All",
+        command=deselect_all_subjects
+    ).pack(side="left")
 
     def load_available_subjects(event=None):
         nonlocal selected_student_id
