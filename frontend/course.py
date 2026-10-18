@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 
 from frontend.window import setup_window
-from backend.subjects import get_all_subjects
+from backend.subjects import get_subjects_by_year_semester
 
 from backend.courses import (
     create_courses_table,
@@ -11,7 +11,8 @@ from backend.courses import (
     create_course_subjects_table,
     assign_subject_to_course,
     get_course_subjects,
-    remove_subject_from_course
+    remove_subject_from_course,
+    delete_course
 )
 
 def show_courses(parent=None):
@@ -130,12 +131,58 @@ def show_courses(parent=None):
         open_course_subjects(
             window, course_id, course_code, course_name
         )
+    
+    def remove_course():
+        selected = tree.selection()
+
+        if not selected:
+            messagebox.showwarning(
+                "No Selection",
+                "Please select a course to remove.",
+                parent=window
+            )
+            return
+
+        values = tree.item(selected[0], "values")
+        course_id = int(values[0])
+        course_code = values[1]
+        course_name = values[2]
+
+        confirm = messagebox.askyesno(
+            "Remove Course",
+            f"Remove {course_code} - {course_name}?\n\n"
+            "Its subject assignments will also be removed.",
+            parent=window
+        )
+
+        if not confirm:
+            return
+
+        if delete_course(course_id):
+            messagebox.showinfo(
+                "Success",
+                "Course removed successfully.",
+                parent=window
+            )
+            load_courses()
+        else:
+            messagebox.showerror(
+                "Error",
+                "Could not remove course.",
+                parent=window
+            )
 
     tk.Button(
         form,
         text="Add Course",
         command=save_course
     ).grid(row=2, column=1, sticky="e", padx=5, pady=8)
+
+    tk.Button(
+        main,
+        text="Remove Course",
+        command=remove_course
+    ).pack(side="left", padx=5)
         
     tk.Button(
         main,
@@ -181,26 +228,17 @@ def open_course_subjects(
         main, text="Assign Existing Subject", padding=10
     )
     form.pack(fill="x", pady=(0, 10))
-
-    subjects = get_all_subjects()
-
-    subject_lookup = {
-        f"{subject[1]} - {subject[2]}": subject[0]
-        for subject in subjects
-    }
-
+        
+    subject_lookup = {}
     subject_var = tk.StringVar()
 
     subject_combo = ttk.Combobox(
         form,
         textvariable=subject_var,
-        values=list(subject_lookup.keys()),
         state="readonly",
         width=45
     )
-    subject_combo.pack(
-        side="left", padx=5, pady=5
-    )
+    subject_combo.pack(side="left", padx=5, pady=5)
 
     year_var = tk.StringVar(value="1st Year")
     year_combo = ttk.Combobox(
@@ -224,6 +262,35 @@ def open_course_subjects(
         width=15
     )
     semester_combo.pack(side="left", padx=5)
+
+    def load_available_subjects(event=None):
+        subjects = get_subjects_by_year_semester(
+            year_var.get(),
+            semester_var.get()
+        )
+    
+        subject_lookup.clear()
+    
+        for subject in subjects:
+            subject_id, code, name, units, year, semester = subject
+            label = f"{code} - {name} ({units} units)"
+            subject_lookup[label] = subject_id
+    
+        subject_combo["values"] = list(subject_lookup.keys())
+        subject_var.set("")
+    
+    
+    year_combo.bind(
+        "<<ComboboxSelected>>",
+        load_available_subjects
+    )
+    
+    semester_combo.bind(
+        "<<ComboboxSelected>>",
+        load_available_subjects
+    )
+    
+    load_available_subjects()
 
     columns = (
         "subject_id", "code", "name",

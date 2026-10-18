@@ -124,7 +124,7 @@ def create_academic_section(parent):
     )
     admission_type = ttk.Combobox(
         frame,
-        values=("New Student", "Returning Student"),
+        values=("New Student", "Returning Student", "Transferee"),
         state="readonly",
         width=27
     )
@@ -147,21 +147,21 @@ def create_academic_section(parent):
     )
 
     def update_year_levels(event=None):
-                selected_type = admission_type.get()
+        selected_type = admission_type.get()
     
-                if selected_type == "New Student":
-                    year_level["values"] = ("1st Year",)
-                    year_level.set("1st Year")
-                else:
-                    year_level["values"] = (
-                    "1st Year",
-                    "2nd Year",
-                    "3rd Year",
-                    "4th Year"
-                )
-                year_level.set("")
+        if selected_type == "New Student":
+            year_level["values"] = ("1st Year",)
+            year_level.set("1st Year")
+        else:
+            year_level["values"] = (
+            "1st Year",
+            "2nd Year",
+            "3rd Year",
+            "4th Year"
+        )
+        year_level.set("")
 
-    admission_type.bind("<<ComboboxSelected>>", update_year_levels)
+    admission_type.bind( "<<ComboboxSelected>>", update_year_levels)
 
     # Course dropdown
     tk.Label(frame, text="Course").grid(

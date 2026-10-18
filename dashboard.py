@@ -4,6 +4,8 @@ from frontend.student import show_students
 from frontend.masterlist import show_masterlist
 from frontend.course import show_courses
 from frontend.subject import show_subjects
+from frontend.enrollment import show_enrollment
+from frontend.enrollment_list import show_enrollment_list
 
 # COLORS
 BG_COLOR = "#F3F6FC"
@@ -79,7 +81,9 @@ def show_dashboard():
 
     nav_button("Dashboard", active=True)
     nav_button("Add Student(s)", show_students)
-    nav_button("Enroll Student(s)")
+    nav_button("Enroll Student(s)",lambda: show_enrollment(window))
+    nav_button("View Enrollments", lambda: show_enrollment_list(window)
+)
     nav_button("View Masterlist", show_masterlist)
     nav_button("Courses", show_courses)
     nav_button("Subjects", lambda: show_subjects(window))
@@ -230,31 +234,7 @@ def show_dashboard():
         bg=WHITE,
         fg=MUTED_COLOR
     ).pack(anchor="w", pady=(0, 10))
-
-    def action_button(text, color):
-        button = tk.Button(
-            actions,
-            text=text,
-            font=("Arial", 9, "bold"),
-            bg=color,
-            fg=WHITE,
-            activebackground=color,
-            activeforeground=WHITE,
-            relief="flat",
-            bd=0,
-            cursor="arrow",
-            takefocus=False
-        )
-        button.pack(
-            fill="x",
-            pady=3,
-            ipady=5
-        )
-
-    action_button("Add Student(s)", PRIMARY_COLOR)
-    action_button("Enroll Student(s)", "#0D9488")
-    action_button("View Masterlist", "#475569")
-
+    
     # Footer
     tk.Label(
         main,
@@ -265,7 +245,6 @@ def show_dashboard():
     ).pack(side="bottom", anchor="w", pady=(12, 0))
 
     window.mainloop()
-
 
 if __name__ == "__main__":
     show_dashboard()

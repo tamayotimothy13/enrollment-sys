@@ -1,4 +1,3 @@
-
 import sqlite3
 
 
@@ -164,6 +163,35 @@ def delete_subject(subject_id):
     except sqlite3.Error as error:
         print("Could not delete subject:", error)
         return False
+
+    finally:
+        connection.close()
+
+def get_subjects_by_year_semester(year_level, semester):
+    connection = sqlite3.connect(DATABASE_PATH)
+
+    try:
+        cursor = connection.cursor()
+
+        cursor.execute("""
+            SELECT
+                subject_id,
+                subject_code,
+                subject_name,
+                units,
+                year_level,
+                semester
+            FROM subjects
+            WHERE year_level = ?
+              AND semester = ?
+            ORDER BY subject_code
+        """, (year_level, semester))
+
+        return cursor.fetchall()
+
+    except sqlite3.Error as error:
+        print("Database error:", error)
+        return []
 
     finally:
         connection.close()

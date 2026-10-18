@@ -119,6 +119,7 @@ def create_course_subjects_table():
         connection.close()
 
 
+
 def assign_subject_to_course(
     course_id, subject_id, year_level, semester
 ):
@@ -127,6 +128,19 @@ def assign_subject_to_course(
     try:
         connection.execute("PRAGMA foreign_keys = ON")
         cursor = connection.cursor()
+
+        # Confirm the selected subject matches the chosen filters.
+        cursor.execute("""
+            SELECT 1
+            FROM subjects
+            WHERE subject_id = ?
+              AND year_level = ?
+              AND semester = ?
+        """, (subject_id, year_level, semester))
+
+        if cursor.fetchone() is None:
+            print("Subject does not match the selected year and semester.")
+            return False
 
         cursor.execute("""
             INSERT INTO course_subjects (
@@ -156,7 +170,6 @@ def assign_subject_to_course(
 
     finally:
         connection.close()
-
 
 def get_course_subjects(course_id):
     connection = sqlite3.connect("database/database.db")
@@ -208,6 +221,36 @@ def remove_subject_from_course(course_id, subject_id):
 
     except sqlite3.Error as error:
         print("Could not remove subject assignment:", error)
+        return False
+
+    finally:
+        connection.close()
+
+
+def delete_course(course_id):
+    connection = sqlite3.connect("database/database.db")
+
+    try:
+        cursor = connection.cursor()
+
+        # Remove the course's curriculum assignments first.
+        cursor.execute("""
+            DELETE FROM course_subjects
+            WHERE course_id = ?
+        """, (course_id,))
+
+        # Then remove the course itself.
+        cursor.execute("""
+            DELETE FROM courses
+            WHERE course_id = ?
+        """, (course_id,))
+
+        connection.commit()
+        return cursor.rowcount > 0
+
+    except sqlite3.Error as error:
+        connection.rollback()
+        print("Could not delete course:", error)
         return False
 
     finally:
