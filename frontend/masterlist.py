@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
-from frontend.window import setup_window
+from frontend.window import setup_window, create_search_box
 from backend.students import (get_all_students, 
                               delete_student, 
                               get_student_by_id,
@@ -46,35 +46,9 @@ def show_masterlist():
     ).pack(side="left")
 
     # Container for the search entry and clear button
-    search_box = tk.Frame(
-        search_frame,
-        relief="solid",
-        bd=1
-    )
+    search_box, search_entry = create_search_box(search_frame)
     search_box.pack(side="right", padx=8)
-
-    # Search entry
-    search_entry = tk.Entry(
-        search_box,
-        font=("Arial", 10),
-        width=25,
-        relief="flat",
-        bd=0
-    )
-    search_entry.pack(side="left", ipady=6)
-    search_entry.bind("<KeyRelease>", lambda event: search_students())
-
-    # Small X button
-    clear_button = tk.Button(
-        search_box,
-        text="×",
-        font=("Arial", 12),
-        relief="flat",
-        bd=0,
-        cursor="hand2",
-        command=lambda: clear_search()
-    )
-    clear_button.pack(side="right", padx=(0, 4))
+    
     # =========================
     # TABLE CARD
     # =========================
@@ -386,6 +360,13 @@ def show_masterlist():
     def clear_search():
         search_entry.delete(0, tk.END)
         load_students()
+
+    # Live search while typing
+    search_entry.bind("<KeyRelease>", lambda event: search_students())
+
+    # Connect the × button to clear the search
+    clear_button = search_box.winfo_children()[1]
+    clear_button.configure(command=clear_search)
 
     def edit_student(student_id):
         student = get_student_by_id(student_id)
