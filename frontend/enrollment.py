@@ -22,11 +22,24 @@ def show_enrollment(parent=None):
         font=("Arial", 18, "bold")
     ).pack(anchor="w", pady=(0, 15))
 
+    # Search students
+    tk.Label(main, text="Search Student (Name or ID)").pack(anchor="w")
+
+    search_var = tk.StringVar()
+
+    search_entry = tk.Entry(
+        main,
+        textvariable=search_var,
+        width=55
+    )
+    search_entry.pack(anchor="w", pady=(5, 8))
+
     # Student selection
-        # Student selection
     tk.Label(main, text="Select Student").pack(anchor="w")
 
     student_options = {}
+    all_student_options = {}
+
     student_var = tk.StringVar(value="Select a student...")
 
     student_combo = ttk.Combobox(
@@ -160,11 +173,41 @@ def show_enrollment(parent=None):
 
             subject_vars.append((var, subject_id, units))
 
+
+    def filter_students(event=None):
+        query = search_var.get().strip().lower()
+
+        # Clear the current selection and subject list.
+        student_var.set("Select a student...")
+        student_combo.set("Select a student...")
+
+        student_options.clear()
+
+        # Find students matching the name or student ID.
+        for display, student_id in all_student_options.items():
+            if (
+                query in display.lower()
+                or query in student_id.lower()
+            ):
+                student_options[display] = student_id
+
+        student_combo["values"] = (
+            "Select a student...",
+            *student_options.keys()
+        )
+
+        load_available_subjects()
+
+    search_entry.bind("<KeyRelease>", filter_students)
+
+
     def refresh_student_options(event=None):
         academic_year = academic_year_var.get().strip()
         semester = semester_var.get()
 
         student_options.clear()
+        all_student_options.clear()
+        search_var.set("")
 
         # Clear the current selection and subject list.
         student_var.set("Select a student...")
@@ -200,12 +243,9 @@ def show_enrollment(parent=None):
                 f"({course}, Year {year_level})"
             )
 
-            student_options[display] = student_id
+            all_student_options[display] = student_id
 
-        student_combo["values"] = (
-            "Select a student...",
-            *student_options.keys()
-        )
+        filter_students()
 
         load_available_subjects()
 
