@@ -1,8 +1,7 @@
-
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-from frontend.window import setup_window
+from frontend.window import setup_window, create_search_box
 from backend.enrollments import (
     get_all_enrollments,
     get_enrollment_details
@@ -15,12 +14,19 @@ def show_enrollment_list(parent=None):
 
     main = tk.Frame(window, padx=15, pady=15)
     main.pack(fill="both", expand=True)
+    
+    # Enrollment Records title and search
+    title_frame = tk.Frame(main)
+    title_frame.pack(fill="x", pady=(0, 10))
 
     tk.Label(
-        main,
+        title_frame,
         text="Enrollment Records",
         font=("Arial", 13, "bold")
-    ).pack(anchor="w", pady=(0, 10))
+    ).pack(side="left")
+
+    search_box, search_entry = create_search_box(title_frame)
+    search_box.pack(side="right", padx=8)
 
     # Enrollment table
     table_frame = tk.Frame(main)
@@ -132,6 +138,61 @@ def show_enrollment_list(parent=None):
                 )
             )
 
+    
+    def search_enrollments():
+        query = search_entry.get().strip().casefold()
+
+        for item in tree.get_children():
+            tree.delete(item)
+
+        for enrollment in get_all_enrollments():
+            (
+                enrollment_id,
+                student_id,
+                first_name,
+                last_name,
+                course,
+                year_level,
+                academic_year,
+                semester,
+                enrollment_date
+            ) = enrollment
+
+            values = (
+                enrollment_id,
+                student_id,
+                f"{first_name} {last_name}",
+                course,
+                f"{year_level}{'st' if year_level == 1 else 'nd' if year_level == 2 else 'rd' if year_level == 3 else 'th'} Year",
+                academic_year,
+                semester
+            )
+
+            if query in " ".join(
+                str(value or "") for value in values
+            ).casefold():
+                tree.insert("", "end", values=values)
+                
+        tree.selection_remove(tree.selection())
+
+        for item in subject_tree.get_children():
+            subject_tree.delete(item)
+
+        total_label.config(text="Total Units: 0")
+
+
+    def clear_search():
+        search_entry.delete(0, tk.END)
+        load_enrollments()
+
+    clear_button = search_box.winfo_children()[1]
+    clear_button.configure(command=clear_search)
+
+    search_entry.bind(
+        "<KeyRelease>",
+        lambda event: search_enrollments()
+    )
+
     def show_selected_subjects(event=None):
         selected = tree.selection()
 
@@ -175,12 +236,6 @@ def show_enrollment_list(parent=None):
 
     button_frame = tk.Frame(main)
     button_frame.pack(fill="x", pady=(10, 0))
-
-    tk.Button(
-        button_frame,
-        text="Refresh",
-        command=load_enrollments
-    ).pack(side="left")
 
     tk.Button(
         button_frame,

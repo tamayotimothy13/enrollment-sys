@@ -21,22 +21,37 @@ def setup_window(window, title):
     window.resizable(False, False)
 
 
-def create_search_bar(parent, placeholder="Search..."):
-    search_frame = tk.Frame(parent)
-
-    search_var = tk.StringVar()
+def create_search_box(parent, search_command=None, clear_command=None):
+    search_box = tk.Frame(
+        parent,
+        relief="solid",
+        bd=1
+    )
 
     search_entry = tk.Entry(
-        search_frame,
-        textvariable=search_var,
-        width=30
+        search_box,
+        font=("Arial", 10),
+        width=25,
+        relief="flat",
+        bd=0
     )
-    search_entry.pack(side="right")
+    search_entry.pack(side="left", ipady=6, padx=(5, 0))
 
-    search_label = tk.Label(
-        search_frame,
-        text="Search:"
+    clear_button = tk.Button(
+        search_box,
+        text="×",
+        font=("Arial", 12),
+        relief="flat",
+        bd=0,
+        cursor="hand2",
+        command=lambda: clear_command() if clear_command else search_entry.delete(0, tk.END)
     )
-    search_label.pack(side="right", padx=(0, 5))
+    clear_button.pack(side="right", padx=(0, 4))
 
-    return search_frame, search_var, search_entry
+    if search_command:
+        search_entry.bind(
+            "<Return>",
+            lambda event: search_command()
+        )
+
+    return search_box, search_entry

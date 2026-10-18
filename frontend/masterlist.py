@@ -62,7 +62,7 @@ def show_masterlist():
         bd=0
     )
     search_entry.pack(side="left", ipady=6)
-    search_entry.bind("<Return>", lambda event: search_students())
+    search_entry.bind("<KeyRelease>", lambda event: search_students())
 
     # Small X button
     clear_button = tk.Button(
