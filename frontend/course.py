@@ -1,3 +1,4 @@
+
 import tkinter as tk
 from tkinter import ttk, messagebox
 
@@ -15,7 +16,8 @@ from backend.courses import (
     delete_course
 )
 
-def show_courses(parent=None):
+
+def show_courses(parent=None, on_change=None):
     if not create_courses_table():
         messagebox.showerror(
             "Database Error",
@@ -43,7 +45,7 @@ def show_courses(parent=None):
         main,
         text="Add New Course",
         padx=10,
-        pady=10, 
+        pady=10,
         bg="#FFFFFF"
     )
     form.pack(fill="x", pady=(0, 15))
@@ -107,7 +109,12 @@ def show_courses(parent=None):
 
             code_entry.delete(0, tk.END)
             name_entry.delete(0, tk.END)
+
             load_courses()
+
+            # Refresh dashboard count
+            if on_change:
+                on_change()
 
         else:
             messagebox.showerror(
@@ -115,7 +122,7 @@ def show_courses(parent=None):
                 "The course code may already exist, or a database error occurred.",
                 parent=window
             )
-      
+
     def manage_subjects():
         selected = tree.selection()
 
@@ -135,7 +142,7 @@ def show_courses(parent=None):
         open_course_subjects(
             window, course_id, course_code, course_name
         )
-    
+
     def remove_course():
         selected = tree.selection()
 
@@ -168,7 +175,13 @@ def show_courses(parent=None):
                 "Course removed successfully.",
                 parent=window
             )
+
             load_courses()
+
+            # Refresh dashboard count
+            if on_change:
+                on_change()
+
         else:
             messagebox.showerror(
                 "Error",
@@ -188,7 +201,7 @@ def show_courses(parent=None):
         cursor="hand2",
     ).grid(row=2, column=1, sticky="e", padx=5, pady=8)
 
-        # Button row
+    # Button row
     button_frame = tk.Frame(main, bg="#F3F6FC")
     button_frame.pack(fill="x", pady=(10, 0))
 
@@ -235,6 +248,7 @@ def show_courses(parent=None):
 
     load_courses()
 
+
 def open_course_subjects(
     parent, course_id, course_code, course_name
 ):
@@ -251,7 +265,7 @@ def open_course_subjects(
         window,
         f"Subjects - {course_code}"
     )
-    
+
     window.configure(bg="#F3F6FC")
 
     main = tk.Frame(
@@ -279,7 +293,7 @@ def open_course_subjects(
         bd=1
     )
     form.pack(fill="x", pady=(0, 10))
-        
+
     subject_lookup = {}
     subject_var = tk.StringVar()
 
@@ -319,28 +333,27 @@ def open_course_subjects(
             year_var.get(),
             semester_var.get()
         )
-    
+
         subject_lookup.clear()
-    
+
         for subject in subjects:
             subject_id, code, name, units, year, semester = subject
             label = f"{code} - {name} ({units} units)"
             subject_lookup[label] = subject_id
-    
+
         subject_combo["values"] = list(subject_lookup.keys())
         subject_var.set("")
-    
-    
+
     year_combo.bind(
         "<<ComboboxSelected>>",
         load_available_subjects
     )
-    
+
     semester_combo.bind(
         "<<ComboboxSelected>>",
         load_available_subjects
     )
-    
+
     load_available_subjects()
 
     columns = (
@@ -486,5 +499,5 @@ def open_course_subjects(
         cursor="hand2",
         command=window.destroy
     ).pack(anchor="e", pady=(10, 0))
-    
+
     load_assignments()

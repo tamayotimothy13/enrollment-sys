@@ -1,19 +1,36 @@
+
 import tkinter as tk
-from tkinter import ttk
-from tkinter import messagebox
+from tkinter import ttk, messagebox
+
 from frontend.window import setup_window, create_search_box
-from backend.students import (get_all_students, 
-                              delete_student, 
-                              get_student_by_id,
-                              update_student)
+
+from backend.students import (
+    get_all_students,
+    delete_student,
+    get_student_by_id,
+    update_student
+)
+
+from backend.courses import get_all_courses
 
 
-def show_masterlist():
+def show_masterlist(parent=None, on_change=None):
 
-    window = tk.Tk()
+    # =========================
+    # CREATE WINDOW
+    # =========================
+
+    if parent:
+        window = tk.Toplevel(parent)
+    else:
+        window = tk.Tk()
+
     setup_window(window, "Student Masterlist")
 
-    # Colors
+    # =========================
+    # COLORS
+    # =========================
+
     BG_COLOR = "#F3F6FC"
     PRIMARY_COLOR = "#2563EB"
     WHITE = "#FFFFFF"
@@ -24,18 +41,93 @@ def show_masterlist():
     window.configure(bg=BG_COLOR)
 
     # =========================
-    # HEADER
-    # =========================321321
- 
+    # COURSE FUNCTIONS
+    # =========================
+
+    def get_registered_courses():
+        return get_all_courses()
+
+    def find_registered_course(course_value):
+
+        if not course_value:
+            return None
+
+        for course in get_registered_courses():
+
+            course_id, course_code, course_name = course
+
+            # Students store the course name as TEXT.
+            if str(course_value).strip().casefold() in (
+                str(course_name).strip().casefold(),
+                str(course_code).strip().casefold()
+            ):
+                return course
+
+        return None
+
+    def get_course_display(course_value):
+
+        course = find_registered_course(course_value)
+
+        if course is None:
+            return ""
+
+        return course[2]
+
+    def format_year_level(value):
+
+        if value is None or value == "":
+            return ""
+
+        value = str(value).strip()
+
+        if value.endswith("Year"):
+            return value
+
+        try:
+            level = int(value)
+
+            suffix = (
+                "st" if level == 1 else
+                "nd" if level == 2 else
+                "rd" if level == 3 else
+                "th"
+            )
+
+            return f"{level}{suffix} Year"
+
+        except ValueError:
+            return value
+
     # =========================
     # MAIN CONTENT
     # =========================
-    content = tk.Frame(window, bg=BG_COLOR)
-    content.pack(fill="both", expand=True, padx=25, pady=20)
 
-    # Search section
-    search_frame = tk.Frame(content, bg=BG_COLOR)
-    search_frame.pack(fill="x", pady=(0, 15))
+    content = tk.Frame(
+        window,
+        bg=BG_COLOR
+    )
+
+    content.pack(
+        fill="both",
+        expand=True,
+        padx=25,
+        pady=20
+    )
+
+    # =========================
+    # SEARCH SECTION
+    # =========================
+
+    search_frame = tk.Frame(
+        content,
+        bg=BG_COLOR
+    )
+
+    search_frame.pack(
+        fill="x",
+        pady=(0, 15)
+    )
 
     tk.Label(
         search_frame,
@@ -45,20 +137,28 @@ def show_masterlist():
         fg=TEXT_COLOR
     ).pack(side="left")
 
-    # Container for the search entry and clear button
     search_box, search_entry = create_search_box(search_frame)
-    search_box.pack(side="right", padx=8)
+
+    search_box.pack(
+        side="right",
+        padx=8
+    )
 
     # =========================
     # TABLE CARD
     # =========================
+
     table_card = tk.Frame(
         content,
         bg=WHITE,
         highlightbackground="#E2E8F0",
         highlightthickness=1
     )
-    table_card.pack(fill="both", expand=True)
+
+    table_card.pack(
+        fill="both",
+        expand=True
+    )
 
     columns = (
         "student_id",
@@ -86,7 +186,7 @@ def show_masterlist():
     tree.column("student_id", width=100, anchor="center")
     tree.column("first_name", width=120)
     tree.column("last_name", width=120)
-    tree.column("course", width=130)
+    tree.column("course", width=180)
     tree.column("year_level", width=90, anchor="center")
     tree.column("email", width=180)
 
@@ -95,7 +195,10 @@ def show_masterlist():
         orient="vertical",
         command=tree.yview
     )
-    tree.configure(yscrollcommand=scrollbar.set)
+
+    tree.configure(
+        yscrollcommand=scrollbar.set
+    )
 
     tree.pack(
         side="left",
@@ -104,12 +207,18 @@ def show_masterlist():
         padx=(10, 0),
         pady=10
     )
-    scrollbar.pack(side="right", fill="y", pady=10, padx=(0, 10))
+
+    scrollbar.pack(
+        side="right",
+        fill="y",
+        pady=10,
+        padx=(0, 10)
+    )
+
     # =========================
     # EMPTY STATE
     # =========================
-    # No student records are loaded yet.
-    # The message is shown while the table is empty.
+
     empty_label = tk.Label(
         table_card,
         text="No students found.",
@@ -117,26 +226,111 @@ def show_masterlist():
         bg=WHITE,
         fg=MUTED_COLOR
     )
-    empty_label.place(relx=0.5, rely=0.5, anchor="center")
 
+    empty_label.place(
+        relx=0.5,
+        rely=0.5,
+        anchor="center"
+    )
+
+    # =========================
+    # SEARCH STUDENTS
+    # =========================
+
+    def search_students():
+
+        query = search_entry.get().strip()
+
+        students = get_all_students()
+
+        filtered_students = [
+            student for student in students
+            if query.casefold() in " ".join(
+                str(value or "") for value in student
+            ).casefold()
+        ]
+
+        for item in tree.get_children():
+            tree.delete(item)
+
+        if filtered_students:
+
+            empty_label.place_forget()
+
+            for student in filtered_students:
+
+                display_values = list(student)
+
+                # Hide deleted or unregistered courses.
+                display_values[3] = get_course_display(
+                    display_values[3]
+                )
+
+                tree.insert(
+                    "",
+                    "end",
+                    values=display_values
+                )
+
+        else:
+
+            empty_label.config(
+                text="No students found."
+            )
+
+            empty_label.place(
+                relx=0.5,
+                rely=0.5,
+                anchor="center"
+            )
+
+    # =========================
+    # CLEAR SEARCH
+    # =========================
+
+    def clear_search():
+
+        search_entry.delete(0, tk.END)
+        search_students()
+
+    search_entry.bind(
+        "<KeyRelease>",
+        lambda event: search_students()
+    )
+
+    clear_button = search_box.winfo_children()[1]
+
+    clear_button.configure(
+        command=clear_search
+    )
+
+    # =========================
+    # DELETE STUDENT
+    # =========================
 
     def handle_delete():
+
         selected = tree.selection()
 
         if not selected:
+
             messagebox.showwarning(
                 "No Selection",
                 "Please select a student to delete.",
                 parent=window
             )
+
             return
 
-        # Get the selected row's values
-        values = tree.item(selected[0], "values")
+        values = tree.item(
+            selected[0],
+            "values"
+        )
+
         student_id = values[0]
+
         student_name = f"{values[1]} {values[2]}"
 
-        # Ask for confirmation
         confirm = messagebox.askyesno(
             "Confirm Deletion",
             f"Are you sure you want to delete {student_name}?\n\n"
@@ -148,59 +342,81 @@ def show_masterlist():
             return
 
         if delete_student(student_id):
+
             search_students()
+
+            if on_change:
+                on_change()
 
             messagebox.showinfo(
                 "Success",
                 "Student successfully deleted.",
                 parent=window
             )
+
         else:
+
             messagebox.showerror(
                 "Error",
                 "Could not delete the student. Check the terminal for details.",
                 parent=window
             )
 
+    # =========================
+    # VIEW STUDENT DETAILS
+    # =========================
 
     def view_student_details():
+
         selected = tree.selection()
 
         if not selected:
+
             messagebox.showwarning(
                 "No Selection",
                 "Please select a student first.",
                 parent=window
             )
+
             return
 
-        # Get the Student ID from the selected row
-        values = tree.item(selected[0], "values")
+        values = tree.item(
+            selected[0],
+            "values"
+        )
+
         student_id = values[0]
 
-        # Retrieve the complete student record
         student = get_student_by_id(student_id)
 
         if student is None:
+
             messagebox.showerror(
                 "Error",
                 "Could not retrieve student details.",
                 parent=window
             )
+
             return
 
-        # Create a separate details window
         details_window = tk.Toplevel(window)
-        setup_window(details_window, "Student Details")
-        details_window.configure(bg=BG_COLOR)
 
-        # Main container
+        setup_window(
+            details_window,
+            "Student Details"
+        )
+
+        details_window.configure(
+            bg=BG_COLOR
+        )
+
         details_frame = tk.Frame(
             details_window,
             bg=WHITE,
             padx=25,
             pady=20
         )
+
         details_frame.pack(
             fill="both",
             expand=True,
@@ -208,14 +424,16 @@ def show_masterlist():
             pady=20
         )
 
-        # Window heading
         tk.Label(
             details_frame,
             text="Student Details",
             font=("Arial", 18, "bold"),
             bg=WHITE,
             fg=TEXT_COLOR
-        ).pack(anchor="w", pady=(0, 5))
+        ).pack(
+            anchor="w",
+            pady=(0, 5)
+        )
 
         tk.Label(
             details_frame,
@@ -223,9 +441,11 @@ def show_masterlist():
             font=("Arial", 11, "bold"),
             bg=WHITE,
             fg=PRIMARY_COLOR
-        ).pack(anchor="w", pady=(0, 15))
+        ).pack(
+            anchor="w",
+            pady=(0, 15)
+        )
 
-        # Fields to display
         fields = [
             ("First Name", "first_name"),
             ("Middle Name / Initial", "middle_name"),
@@ -239,21 +459,41 @@ def show_masterlist():
             ("Emergency Contact", "emergency_contact_number"),
             ("Admission Type", "admission_type"),
             ("Year Level", "year_level"),
-            ("Course", "course"),
         ]
 
-        # Display each field
-        for label_text, field_name in fields:
-            value = student[field_name]
+        # Check if the student's course still exists.
+        registered_course = find_registered_course(
+            student.get("course")
+        )
 
-            if field_name == "year_level" and value:
-                value = f"{value}{'st' if value == 1 else 'nd' if value == 2 else 'rd' if value == 3 else 'th'} Year"
+        # Only display Course if it exists.
+        if registered_course is not None:
+            fields.append(
+                ("Course", "course")
+            )
+
+        for label_text, field_name in fields:
+
+            value = student.get(field_name)
+
+            if field_name == "year_level":
+                value = format_year_level(value)
+
+            elif field_name == "course":
+                value = registered_course[2]
 
             if value is None or value == "":
                 value = "Not provided"
 
-            row = tk.Frame(details_frame, bg=WHITE)
-            row.pack(fill="x", pady=3)
+            row = tk.Frame(
+                details_frame,
+                bg=WHITE
+            )
+
+            row.pack(
+                fill="x",
+                pady=3
+            )
 
             tk.Label(
                 row,
@@ -274,11 +514,25 @@ def show_masterlist():
                 anchor="w",
                 justify="left",
                 wraplength=350
-            ).pack(side="left", fill="x", expand=True)
+            ).pack(
+                side="left",
+                fill="x",
+                expand=True
+            )
 
-        # Bottom buttons
-        button_frame = tk.Frame(details_frame, bg=WHITE)
-        button_frame.pack(fill="x", pady=(20, 0))
+        # =========================
+        # BOTTOM BUTTONS
+        # =========================
+
+        button_frame = tk.Frame(
+            details_frame,
+            bg=WHITE
+        )
+
+        button_frame.pack(
+            fill="x",
+            pady=(20, 0)
+        )
 
         tk.Button(
             button_frame,
@@ -289,8 +543,14 @@ def show_masterlist():
             fg=WHITE,
             relief="flat",
             cursor="hand2",
-            command=lambda: edit_student(student_id)
-        ).pack(side="left", ipady=5)
+            command=lambda: edit_student(
+                student_id,
+                details_window
+            )
+        ).pack(
+            side="left",
+            ipady=5
+        )
 
         tk.Button(
             button_frame,
@@ -300,69 +560,53 @@ def show_masterlist():
             relief="flat",
             cursor="hand2",
             command=details_window.destroy
-        ).pack(side="right", ipady=5)
+        ).pack(
+            side="right",
+            ipady=5
+        )
 
-    def search_students():
-        query = search_entry.get().strip()
+    # =========================
+    # EDIT STUDENT
+    # =========================
 
-        students = get_all_students()
+    def edit_student(student_id, details_window=None):
 
-        # Filter records using the search query
-        filtered_students = [
-            student for student in students
-            if query.casefold() in " ".join(
-                str(value or "") for value in student
-            ).casefold()
-        ]
-
-        # Clear the current table
-        for item in tree.get_children():
-            tree.delete(item)
-
-        # Display matching records
-        if filtered_students:
-            empty_label.place_forget()
-
-            for student in filtered_students:
-                tree.insert("", "end", values=student)
-        else:
-            empty_label.config(text="No students found.")
-            empty_label.place(
-                relx=0.5,
-                rely=0.5,
-                anchor="center"
-            )
-
-    def clear_search():
-        search_entry.delete(0, tk.END)
-        search_students()
-
-    # Live search while typing
-    search_entry.bind("<KeyRelease>", lambda event: search_students())
-
-    # Connect the × button to clear the search
-    clear_button = search_box.winfo_children()[1]
-    clear_button.configure(command=clear_search)
-
-    search_students()
-
-    def edit_student(student_id):
         student = get_student_by_id(student_id)
 
         if student is None:
+
             messagebox.showerror(
                 "Error",
                 "Could not retrieve student details.",
                 parent=window
             )
+
             return
 
         edit_window = tk.Toplevel(window)
-        setup_window(edit_window, "Edit Student")
-        edit_window.configure(bg=BG_COLOR)
 
-        form = tk.Frame(edit_window, bg=WHITE, padx=20, pady=20)
-        form.pack(fill="both", expand=True, padx=20, pady=20)
+        setup_window(
+            edit_window,
+            "Edit Student"
+        )
+
+        edit_window.configure(
+            bg=BG_COLOR
+        )
+
+        form = tk.Frame(
+            edit_window,
+            bg=WHITE,
+            padx=20,
+            pady=20
+        )
+
+        form.pack(
+            fill="both",
+            expand=True,
+            padx=20,
+            pady=20
+        )
 
         tk.Label(
             form,
@@ -370,9 +614,18 @@ def show_masterlist():
             font=("Arial", 16, "bold"),
             bg=WHITE,
             fg=TEXT_COLOR
-        ).grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 15))
+        ).grid(
+            row=0,
+            column=0,
+            columnspan=2,
+            sticky="w",
+            pady=(0, 15)
+        )
 
-        # Text fields: label, database key
+        # =========================
+        # TEXT FIELDS
+        # =========================
+
         field_names = [
             ("First Name", "first_name"),
             ("Middle Name / Initial", "middle_name"),
@@ -388,21 +641,49 @@ def show_masterlist():
 
         entries = {}
 
-        for row, (label_text, key) in enumerate(field_names, start=1):
+        for row, (label_text, key) in enumerate(
+            field_names,
+            start=1
+        ):
+
             tk.Label(
                 form,
                 text=label_text,
                 font=("Arial", 10),
                 bg=WHITE,
                 fg=TEXT_COLOR
-            ).grid(row=row, column=0, sticky="w", padx=(0, 12), pady=5)
+            ).grid(
+                row=row,
+                column=0,
+                sticky="w",
+                padx=(0, 12),
+                pady=5
+            )
 
-            entry = tk.Entry(form, font=("Arial", 10), width=35)
-            entry.grid(row=row, column=1, sticky="ew", pady=5)
-            entry.insert(0, student[key] or "")
+            entry = tk.Entry(
+                form,
+                font=("Arial", 10),
+                width=35
+            )
+
+            entry.grid(
+                row=row,
+                column=1,
+                sticky="ew",
+                pady=5
+            )
+
+            entry.insert(
+                0,
+                student.get(key) or ""
+            )
+
             entries[key] = entry
 
-        # Dropdown fields
+        # =========================
+        # DROPDOWN FIELDS
+        # =========================
+
         next_row = len(field_names) + 1
 
         dropdown_options = {
@@ -410,34 +691,49 @@ def show_masterlist():
                 "Admission Type",
                 ("New Student", "Returning Student")
             ),
+
             "year_level": (
                 "Year Level",
                 ("1st Year", "2nd Year", "3rd Year", "4th Year")
             ),
-            "course": (
-                "Course",
-                (
-                    "BS Computer Science",
-                    "BS Information Technology",
-                    "BS Information Systems"
-                )
-            ),
         }
+
+        # Retrieve courses from the database.
+        registered_courses = get_registered_courses()
+
+        course_names = tuple(
+            course[2] for course in registered_courses
+        )
+
+        # Add Course dropdown only when courses exist.
+        if registered_courses:
+
+            dropdown_options["course"] = (
+                "Course",
+                course_names
+            )
 
         dropdowns = {}
 
         for offset, (key, (label_text, options)) in enumerate(
             dropdown_options.items()
         ):
+
             row = next_row + offset
 
             tk.Label(
                 form,
                 text=label_text,
                 font=("Arial", 10),
-                bg=BG_COLOR,
+                bg=WHITE,
                 fg=TEXT_COLOR
-            ).grid(row=row, column=0, sticky="w", padx=(0, 12), pady=5)
+            ).grid(
+                row=row,
+                column=0,
+                sticky="w",
+                padx=(0, 12),
+                pady=5
+            )
 
             combo = ttk.Combobox(
                 form,
@@ -445,19 +741,50 @@ def show_masterlist():
                 state="readonly",
                 width=32
             )
-            combo.grid(row=row, column=1, sticky="ew", pady=5)
+
+            combo.grid(
+                row=row,
+                column=1,
+                sticky="ew",
+                pady=5
+            )
 
             if key == "year_level":
-                level = int(student[key])
-                combo.set(f"{level}{'st' if level == 1 else 'nd' if level == 2 else 'rd' if level == 3 else 'th'} Year")
+
+                combo.set(
+                    format_year_level(
+                        student.get(key)
+                    )
+                )
+
+            elif key == "course":
+
+                current_course = find_registered_course(
+                    student.get("course")
+                )
+
+                if current_course:
+                    combo.set(current_course[2])
+
             else:
-                combo.set(student[key] or "")
+
+                combo.set(
+                    student.get(key) or ""
+                )
 
             dropdowns[key] = combo
 
-        form.columnconfigure(1, weight=1)
+        form.columnconfigure(
+            1,
+            weight=1
+        )
+
+        # =========================
+        # SAVE CHANGES
+        # =========================
 
         def save_changes():
+
             data = {
                 key: entry.get().strip()
                 for key, entry in entries.items()
@@ -465,9 +792,17 @@ def show_masterlist():
 
             admission_type = dropdowns["admission_type"].get()
             year_level = dropdowns["year_level"].get()
-            course = dropdowns["course"].get()
 
-            # Basic required-field validation
+            # Preserve old course value if no courses exist.
+            if registered_courses:
+
+                course = dropdowns["course"].get()
+
+            else:
+
+                course = student.get("course") or ""
+
+            # Required field validation.
             required_fields = [
                 "first_name",
                 "last_name",
@@ -478,22 +813,39 @@ def show_masterlist():
             ]
 
             for key in required_fields:
+
                 if not data[key]:
+
                     messagebox.showwarning(
                         "Missing Information",
                         f"Please enter {key.replace('_', ' ')}.",
                         parent=edit_window
                     )
+
                     return
 
-            if not admission_type or not year_level or not course:
+            if not admission_type or not year_level:
+
                 messagebox.showwarning(
                     "Missing Information",
-                    "Please select the admission type, year level, and course.",
+                    "Please select the admission type and year level.",
                     parent=edit_window
                 )
+
                 return
 
+            # Require course selection when courses exist.
+            if registered_courses and not course:
+
+                messagebox.showwarning(
+                    "Missing Information",
+                    "Please select a course.",
+                    parent=edit_window
+                )
+
+                return
+
+            # Update student database.
             success = update_student(
                 student_id=student_id,
                 first_name=data["first_name"],
@@ -512,11 +864,13 @@ def show_masterlist():
             )
 
             if not success:
+
                 messagebox.showerror(
                     "Update Failed",
                     "The student could not be updated. Check the terminal for details.",
                     parent=edit_window
                 )
+
                 return
 
             messagebox.showinfo(
@@ -527,14 +881,25 @@ def show_masterlist():
 
             edit_window.destroy()
 
-            # Close the old details window if it still exists.
-            for child in window.winfo_children():
-                if isinstance(child, tk.Toplevel) and child.title() == "Student Details":
-                    child.destroy()
+            if details_window and details_window.winfo_exists():
+                details_window.destroy()
 
+            # Refresh masterlist.
             search_students()
 
-        button_frame = tk.Frame(form, bg=WHITE)
+            # Refresh dashboard.
+            if on_change:
+                on_change()
+
+        # =========================
+        # EDIT BUTTONS
+        # =========================
+
+        button_frame = tk.Frame(
+            form,
+            bg=WHITE
+        )
+
         button_frame.grid(
             row=next_row + len(dropdown_options),
             column=0,
@@ -551,7 +916,11 @@ def show_masterlist():
             relief="flat",
             cursor="hand2",
             command=save_changes
-        ).pack(side="left", padx=(0, 8), ipady=5)
+        ).pack(
+            side="left",
+            padx=(0, 8),
+            ipady=5
+        )
 
         tk.Button(
             button_frame,
@@ -559,13 +928,24 @@ def show_masterlist():
             relief="flat",
             cursor="hand2",
             command=edit_window.destroy
-        ).pack(side="left", ipady=5)
+        ).pack(
+            side="left",
+            ipady=5
+        )
 
     # =========================
     # ACTION BUTTONS
     # =========================
-    actions = tk.Frame(content, bg=BG_COLOR)
-    actions.pack(fill="x", pady=(15, 0))
+
+    actions = tk.Frame(
+        content,
+        bg=BG_COLOR
+    )
+
+    actions.pack(
+        fill="x",
+        pady=(15, 0)
+    )
 
     tk.Button(
         actions,
@@ -577,7 +957,11 @@ def show_masterlist():
         relief="flat",
         cursor="hand2",
         command=view_student_details
-    ).pack(side="left", padx=(0, 8), ipady=5)
+    ).pack(
+        side="left",
+        padx=(0, 8),
+        ipady=5
+    )
 
     tk.Button(
         actions,
@@ -589,7 +973,11 @@ def show_masterlist():
         relief="flat",
         cursor="hand2",
         command=handle_delete
-    ).pack(side="left", padx=8, ipady=5)
+    ).pack(
+        side="left",
+        padx=8,
+        ipady=5
+    )
 
     tk.Button(
         actions,
@@ -601,10 +989,23 @@ def show_masterlist():
         relief="flat",
         cursor="hand2",
         command=window.destroy
-    ).pack(side="right", ipady=5)
+    ).pack(
+        side="right",
+        ipady=5
+    )
 
-    window.mainloop()
+    # =========================
+    # INITIAL LOAD
+    # =========================
+
+    search_students()
 
 
 if __name__ == "__main__":
-    show_masterlist()
+
+    root = tk.Tk()
+    root.withdraw()
+
+    show_masterlist(root)
+
+    root.mainloop()

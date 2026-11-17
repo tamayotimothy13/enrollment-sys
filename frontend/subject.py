@@ -1,3 +1,4 @@
+
 import tkinter as tk
 from tkinter import ttk, messagebox
 from frontend.window import setup_window
@@ -10,13 +11,15 @@ from backend.subjects import (
     delete_subject
 )
 
-def show_subjects(parent=None):
+
+def show_subjects(parent=None, on_change=None):
     selected_subject_id = tk.StringVar(value="")
 
     if not create_subjects_table():
         messagebox.showerror(
             "Database Error",
-            "Could not prepare the subjects table."
+            "Could not prepare the subjects table.",
+            parent=parent
         )
         return
 
@@ -26,20 +29,20 @@ def show_subjects(parent=None):
         window = tk.Tk()
 
     setup_window(window, "Subject Management")
-
     window.configure(bg="#F3F6FC")
 
+    # Subject Manager Title
     title_label = tk.Label(
-            window,
-            text="SUBJECTS MANAGER",
-            font=("Arial", 12, "bold"),
-            bg="#F3F6FC",
-            fg="#1E293B",
-            anchor="w"
-        )
+        window,
+        text="SUBJECTS MANAGER",
+        font=("Arial", 12, "bold"),
+        bg="#F3F6FC",
+        fg="#1E293B",
+        anchor="w"
+    )
     title_label.pack(fill="x", padx=20, pady=(15, 10))
 
-    # Subject details
+    # Subject Details Form
     form = tk.LabelFrame(
         window,
         text="  Add/Edit Subjects  ",
@@ -55,9 +58,13 @@ def show_subjects(parent=None):
     )
     form.pack(fill="x", padx=20, pady=5)
 
-    tk.Label(form, text="Subject Code", bg="#FFFFFF").grid(
-        row=0, column=0, sticky="w", padx=5, pady=5
-    )
+    # Subject Code
+    tk.Label(
+        form,
+        text="Subject Code",
+        bg="#FFFFFF"
+    ).grid(row=0, column=0, sticky="w", padx=5, pady=5)
+
     code_entry = ttk.Entry(form, width=25)
     code_entry.grid(row=0, column=1, padx=5, pady=5)
 
@@ -81,9 +88,13 @@ def show_subjects(parent=None):
     name_entry = ttk.Entry(name_frame, width=30)
     name_entry.pack(side="left")
 
-    tk.Label(form, text="Units", bg="#FFFFFF").grid(
-        row=1, column=0, sticky="w", padx=5, pady=5
-    )
+    # Units
+    tk.Label(
+        form,
+        text="Units",
+        bg="#FFFFFF"
+    ).grid(row=1, column=0, sticky="w", padx=5, pady=5)
+
     units_entry = ttk.Entry(form, width=25)
     units_entry.grid(row=1, column=1, padx=5, pady=5)
 
@@ -120,10 +131,15 @@ def show_subjects(parent=None):
     )
     year_combo.pack(side="left")
 
-    tk.Label(form, text="Semester", bg="#FFFFFF").grid(
-        row=2, column=0, sticky="w", padx=5, pady=5
-    )
+    # Semester
+    tk.Label(
+        form,
+        text="Semester",
+        bg="#FFFFFF"
+    ).grid(row=2, column=0, sticky="w", padx=5, pady=5)
+
     semester_var = tk.StringVar(value="1st Semester")
+
     semester_combo = ttk.Combobox(
         form,
         textvariable=semester_var,
@@ -133,20 +149,20 @@ def show_subjects(parent=None):
     )
     semester_combo.grid(row=2, column=1, padx=5, pady=5)
 
-    # Table of saved subjects
+    # Subject Information Table
     table_frame = tk.LabelFrame(
-            window,
-            text="  Subject Information  ",
-            padx=10,
-            pady=8,
-            bg="#FFFFFF",
-            fg="#1E293B",
-            font=("Arial", 10, "bold"),
-            relief="flat",
-            bd=1,
-            highlightbackground="#D8E1EA",
-            highlightthickness=1
-        )
+        window,
+        text="  Subject Information  ",
+        padx=10,
+        pady=8,
+        bg="#FFFFFF",
+        fg="#1E293B",
+        font=("Arial", 10, "bold"),
+        relief="flat",
+        bd=1,
+        highlightbackground="#D8E1EA",
+        highlightthickness=1
+    )
     table_frame.pack(fill="x", padx=20, pady=5)
 
     columns = (
@@ -189,19 +205,42 @@ def show_subjects(parent=None):
         orient="vertical",
         command=subject_table.yview
     )
-    subject_table.configure(yscrollcommand=scrollbar.set)
 
-    subject_table.pack(side="left", fill="both", expand=True)
-    scrollbar.pack(side="right", fill="y")
+    subject_table.configure(
+        yscrollcommand=scrollbar.set
+    )
 
+    subject_table.pack(
+        side="left",
+        fill="both",
+        expand=True
+    )
+
+    scrollbar.pack(
+        side="right",
+        fill="y"
+    )
+
+    # Load Subjects
     def load_subjects():
         for item in subject_table.get_children():
             subject_table.delete(item)
 
-        for subject in get_all_subjects():
-            subject_table.insert("", "end", values=subject)
+        subjects = get_all_subjects()
 
-    
+        for subject in subjects:
+            subject_table.insert(
+                "",
+                "end",
+                values=subject
+            )
+
+    # Refresh Dashboard
+    def refresh_dashboard():
+        if on_change:
+            on_change()
+
+    # Edit Subject
     def edit_subject():
         selected = subject_table.selection()
 
@@ -213,7 +252,10 @@ def show_subjects(parent=None):
             )
             return
 
-        values = subject_table.item(selected[0], "values")
+        values = subject_table.item(
+            selected[0],
+            "values"
+        )
 
         code_entry.delete(0, tk.END)
         code_entry.insert(0, values[1])
@@ -228,9 +270,12 @@ def show_subjects(parent=None):
         semester_var.set(values[5])
 
         selected_subject_id.set(values[0])
-        save_button.config(text="Save Changes")
 
+        save_button.config(
+            text="Save Changes"
+        )
 
+    # Clear Form
     def clear_form():
         code_entry.delete(0, tk.END)
         name_entry.delete(0, tk.END)
@@ -240,10 +285,14 @@ def show_subjects(parent=None):
         semester_var.set("1st Semester")
 
         selected_subject_id.set("")
-        save_button.config(text="Add Subject")
+
+        save_button.config(
+            text="Add Subject"
+        )
 
         code_entry.focus_set()
-    
+
+    # Delete Subject
     def remove_subject():
         selected = subject_table.selection()
 
@@ -255,7 +304,11 @@ def show_subjects(parent=None):
             )
             return
 
-        values = subject_table.item(selected[0], "values")
+        values = subject_table.item(
+            selected[0],
+            "values"
+        )
+
         subject_id = values[0]
         subject_code = values[1]
 
@@ -274,15 +327,11 @@ def show_subjects(parent=None):
                 "Subject deleted successfully.",
                 parent=window
             )
-            load_subjects()
-            selected_subject_id.set("")
-            save_button.config(text="Add Subject")
 
-            code_entry.delete(0, tk.END)
-            name_entry.delete(0, tk.END)
-            units_entry.delete(0, tk.END)
-            year_var.set("1st Year")
-            semester_var.set("1st Semester")
+            load_subjects()
+            clear_form()
+            refresh_dashboard()
+
         else:
             messagebox.showerror(
                 "Error",
@@ -290,6 +339,7 @@ def show_subjects(parent=None):
                 parent=window
             )
 
+    # Add / Update Subject
     def save_subject():
         code = code_entry.get().strip()
         name = name_entry.get().strip()
@@ -305,8 +355,10 @@ def show_subjects(parent=None):
 
         try:
             units = int(units_text)
+
             if units <= 0:
                 raise ValueError
+
         except ValueError:
             messagebox.showwarning(
                 "Invalid Units",
@@ -315,7 +367,9 @@ def show_subjects(parent=None):
             )
             return
 
-        if selected_subject_id.get():
+        is_editing = bool(selected_subject_id.get())
+
+        if is_editing:
             success = update_subject(
                 int(selected_subject_id.get()),
                 code,
@@ -333,13 +387,8 @@ def show_subjects(parent=None):
                 semester_var.get()
             )
 
-        
         if success:
-            action = (
-                "updated"
-                if selected_subject_id.get()
-                else "added"
-            )
+            action = "updated" if is_editing else "added"
 
             messagebox.showinfo(
                 "Success",
@@ -347,32 +396,32 @@ def show_subjects(parent=None):
                 parent=window
             )
 
-            # Clear the form
-            code_entry.delete(0, tk.END)
-            name_entry.delete(0, tk.END)
-            units_entry.delete(0, tk.END)
-
-            # Exit edit mode
-            selected_subject_id.set("")
-            save_button.config(text="Add Subject")
-
-            # Refresh the table
+            clear_form()
             load_subjects()
-            code_entry.focus_set()
+            refresh_dashboard()
 
         else:
             messagebox.showerror(
-                "Unable to Add Subject",
+                "Unable to Save Subject",
                 "The subject could not be saved. Check the console "
                 "for database errors or verify that the subject "
                 "code is not already in use.",
                 parent=window
             )
 
-    button_frame = tk.Frame(form, bg="#FFFFFF")
+    # Buttons
+    button_frame = tk.Frame(
+        form,
+        bg="#FFFFFF"
+    )
+
     button_frame.grid(
-        row=2, column=2, columnspan=2,
-        sticky="e", padx=5, pady=5
+        row=2,
+        column=2,
+        columnspan=2,
+        sticky="e",
+        padx=5,
+        pady=5
     )
 
     save_button = tk.Button(
@@ -436,12 +485,15 @@ def show_subjects(parent=None):
         command=window.destroy
     ).pack(side="left", padx=5)
 
-
+    # Initial Load
     load_subjects()
     code_entry.focus_set()
+
 
 if __name__ == "__main__":
     root = tk.Tk()
     root.withdraw()
+
     show_subjects(root)
+
     root.mainloop()

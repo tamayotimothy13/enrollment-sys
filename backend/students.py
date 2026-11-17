@@ -1,7 +1,9 @@
+
 import sqlite3
 import random
 import string
 from datetime import datetime
+
 
 def generate_student_id():
     year = datetime.now().strftime("%y")
@@ -9,6 +11,7 @@ def generate_student_id():
     number = random.randint(0, 9999)
 
     return f"{year}{letter}-{number:04d}"
+
 
 def find_students_by_name(first_name, last_name):
     connection = sqlite3.connect("database/database.db")
@@ -96,7 +99,7 @@ def add_student(
                 return True
 
             except sqlite3.IntegrityError as error:
-                # Retry only if the generated student ID already exists.
+
                 if "UNIQUE constraint failed: students.student_id" in str(error):
                     print(
                         f"Student ID collision on attempt "
@@ -145,6 +148,24 @@ def get_all_students():
         connection.close()
 
 
+def get_student_count():
+    connection = sqlite3.connect("database/database.db")
+
+    try:
+        cursor = connection.cursor()
+
+        cursor.execute("SELECT COUNT(*) FROM students")
+
+        return cursor.fetchone()[0]
+
+    except sqlite3.Error as error:
+        print("Database error:", error)
+        return 0
+
+    finally:
+        connection.close()
+
+
 def delete_student(student_id):
     connection = sqlite3.connect("database/database.db")
 
@@ -166,7 +187,7 @@ def delete_student(student_id):
     finally:
         connection.close()
 
-    
+
 def get_student_by_id(student_id):
     connection = sqlite3.connect("database/database.db")
     connection.row_factory = sqlite3.Row

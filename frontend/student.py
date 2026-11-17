@@ -1,23 +1,31 @@
+
 import tkinter as tk
 import re
+
 from tkinter import ttk, messagebox
 from datetime import datetime
+
 from backend.students import add_student, find_students_by_name
 from backend.courses import get_all_courses
 from frontend.window import setup_window
 
 
-
+# ==============================
+# PLACEHOLDER FUNCTIONS
+# ==============================
 def add_placeholder(entry, placeholder):
+
     entry.insert(0, placeholder)
     entry.config(fg="gray")
 
     def on_focus_in(event):
+
         if entry.get() == placeholder:
             entry.delete(0, tk.END)
             entry.config(fg="black")
 
     def on_focus_out(event):
+
         if not entry.get():
             entry.insert(0, placeholder)
             entry.config(fg="gray")
@@ -27,6 +35,7 @@ def add_placeholder(entry, placeholder):
 
 
 def get_field_value(entry, placeholder):
+
     value = entry.get().strip()
 
     if value == placeholder:
@@ -34,7 +43,12 @@ def get_field_value(entry, placeholder):
 
     return value
 
+
+# ==============================
+# CREATE INPUT FIELD
+# ==============================
 def create_field(parent, label_text, row, column, width=30):
+
     tk.Label(
         parent,
         text=label_text,
@@ -48,7 +62,7 @@ def create_field(parent, label_text, row, column, width=30):
         padx=10,
         pady=(5, 0)
     )
-    
+
     entry = tk.Entry(
         parent,
         width=width,
@@ -60,7 +74,8 @@ def create_field(parent, label_text, row, column, width=30):
         highlightbackground="#D8E1EA",
         highlightcolor="#087E8B",
         font=("Arial", 10)
-    ) 
+    )
+
     entry.grid(
         row=row + 1,
         column=column,
@@ -69,9 +84,15 @@ def create_field(parent, label_text, row, column, width=30):
         pady=(5, 7),
         ipady=5
     )
+
     return entry
 
+
+# ==============================
+# PERSONAL INFORMATION
+# ==============================
 def create_personal_section(parent):
+
     frame = tk.LabelFrame(
         parent,
         text="  Personal Information  ",
@@ -85,25 +106,26 @@ def create_personal_section(parent):
         highlightbackground="#D8E1EA",
         highlightthickness=1
     )
+
     frame.pack(fill="x", padx=20, pady=5)
 
     first_name = create_field(frame, "First Name", 0, 0)
-    add_placeholder(first_name, "e.g  Juan")
+    add_placeholder(first_name, "e.g Juan")
 
     last_name = create_field(frame, "Last Name", 0, 1)
-    add_placeholder(last_name, "e.g  Dela Cruz")
+    add_placeholder(last_name, "e.g Dela Cruz")
 
     middle_initial = create_field(frame, "M.I", 0, 2, width=15)
-    add_placeholder(middle_initial, "e.g  J.")
+    add_placeholder(middle_initial, "e.g J.")
 
     prefix = create_field(frame, "Prefix", 0, 3, width=15)
-    add_placeholder(prefix, "e.g  Jr, II")
-    
+    add_placeholder(prefix, "e.g Jr, II")
+
     birthday = create_field(frame, "Birthday", 2, 0)
     add_placeholder(birthday, "YYYY-MM-DD")
 
     birth_place = create_field(frame, "Place of Birth", 2, 1)
-    add_placeholder(birth_place, "e.g  Marikina City")
+    add_placeholder(birth_place, "e.g Marikina City")
 
     return {
         "first_name": first_name,
@@ -111,10 +133,15 @@ def create_personal_section(parent):
         "last_name": last_name,
         "prefix": prefix,
         "birthday": birthday,
-        "birth_place":birth_place
+        "birth_place": birth_place
     }
 
+
+# ==============================
+# CONTACT INFORMATION
+# ==============================
 def create_contact_section(parent):
+
     frame = tk.LabelFrame(
         parent,
         text="  Contact Information  ",
@@ -128,28 +155,42 @@ def create_contact_section(parent):
         highlightbackground="#D8E1EA",
         highlightthickness=1
     )
+
     frame.pack(fill="x", padx=20, pady=5)
 
     address = create_field(frame, "Address", 0, 0, width=70)
-    add_placeholder(address, "House/Unit/Lot No., Street Name, Subdivision/Village, Barangay, City")
-    
+    add_placeholder(
+        address,
+        "House/Unit/Lot No., Street Name, Subdivision/Village, Barangay, City"
+    )
+
     email = create_field(frame, "Email", 0, 1, width=40)
     add_placeholder(email, "example@email.com")
 
-    contact_number = create_field(frame, "Personal Contact #", 2,0)
+    contact_number = create_field(frame, "Personal Contact #", 2, 0)
     add_placeholder(contact_number, "09XXXXXXXXX")
 
-    emergency_contact_number = create_field(frame, "Other Contact # (in case of emergency)", 2, 1)
+    emergency_contact_number = create_field(
+        frame,
+        "Other Contact # (in case of emergency)",
+        2,
+        1
+    )
     add_placeholder(emergency_contact_number, "09XXXXXXXXX")
 
     return {
-        "address":address,
-        "email":email,
-        "contact_number" :contact_number,
-        "emergency_contact_number":emergency_contact_number
+        "address": address,
+        "email": email,
+        "contact_number": contact_number,
+        "emergency_contact_number": emergency_contact_number
     }
 
+
+# ==============================
+# ACADEMIC INFORMATION
+# ==============================
 def create_academic_section(parent):
+
     frame = tk.LabelFrame(
         parent,
         text="  Academic Information  ",
@@ -163,12 +204,22 @@ def create_academic_section(parent):
         highlightbackground="#D8E1EA",
         highlightthickness=1
     )
+
     frame.pack(fill="x", padx=20, pady=5)
 
-    # admission_type dropdown
-    tk.Label(frame, text="Admission Type", bg="#FFFFFF", fg="#344054",
-                 font=("Arial", 9, "bold")).grid(
-            row=0, column=0, sticky="w", padx=10, pady=(5, 0)
+    # Admission Type
+    tk.Label(
+        frame,
+        text="Admission Type",
+        bg="#FFFFFF",
+        fg="#344054",
+        font=("Arial", 9, "bold")
+    ).grid(
+        row=0,
+        column=0,
+        sticky="w",
+        padx=10,
+        pady=(5, 0)
     )
 
     admission_type = ttk.Combobox(
@@ -177,14 +228,28 @@ def create_academic_section(parent):
         state="readonly",
         width=27
     )
+
     admission_type.grid(
-        row=1, column=0, sticky="ew", padx=10, pady=(5, 0)
+        row=1,
+        column=0,
+        sticky="ew",
+        padx=10,
+        pady=(5, 0)
     )
 
-    # year level dropdown
-    tk.Label(frame, text="Year Level (this s.y.)", bg="#FFFFFF", fg="#344054",
-                 font=("Arial", 9, "bold")).grid(
-            row=0, column=1, sticky="w", padx=10, pady=(5, 0)
+    # Year Level
+    tk.Label(
+        frame,
+        text="Year Level (this s.y.)",
+        bg="#FFFFFF",
+        fg="#344054",
+        font=("Arial", 9, "bold")
+    ).grid(
+        row=0,
+        column=1,
+        sticky="w",
+        padx=10,
+        pady=(5, 0)
     )
 
     year_level = ttk.Combobox(
@@ -193,29 +258,38 @@ def create_academic_section(parent):
         state="readonly",
         width=27
     )
+
     year_level.grid(
-        row=1, column=1, sticky="ew", padx=10, pady=(5, 0)
+        row=1,
+        column=1,
+        sticky="ew",
+        padx=10,
+        pady=(5, 0)
     )
 
     def update_year_levels(event=None):
+
         selected_type = admission_type.get()
-    
+
         if selected_type == "New Student":
             year_level["values"] = ("1st Year",)
             year_level.set("1st Year")
+
         else:
             year_level["values"] = (
-            "1st Year",
-            "2nd Year",
-            "3rd Year",
-            "4th Year"
-        )
-        year_level.set("")
+                "1st Year",
+                "2nd Year",
+                "3rd Year",
+                "4th Year"
+            )
+            year_level.set("")
 
-    admission_type.bind( "<<ComboboxSelected>>", update_year_levels)
+    admission_type.bind(
+        "<<ComboboxSelected>>",
+        update_year_levels
+    )
 
-    # Course dropdown
-    # Course dropdown
+    # Course
     tk.Label(
         frame,
         text="Course",
@@ -223,15 +297,15 @@ def create_academic_section(parent):
         fg="#344054",
         font=("Arial", 9, "bold")
     ).grid(
-        row=0, column=2,
+        row=0,
+        column=2,
         sticky="w",
-        padx=10, pady=(5, 0)
+        padx=10,
+        pady=(5, 0)
     )
 
-    # Load courses from Course Manager
     courses = get_all_courses()
 
-    # Map the displayed course to its stored course name
     course_lookup = {
         f"{code} - {name}": name
         for course_id, code, name in courses
@@ -245,32 +319,46 @@ def create_academic_section(parent):
     )
 
     course.grid(
-        row=1, column=2,
+        row=1,
+        column=2,
         sticky="ew",
-        padx=10, pady=(5, 0)
+        padx=10,
+        pady=(5, 0)
     )
 
     return {
-    "admission_type": admission_type,
-    "year_level": year_level,
-    "course": course,
-    "course_lookup": course_lookup
+        "admission_type": admission_type,
+        "year_level": year_level,
+        "course": course,
+        "course_lookup": course_lookup
     }
 
+
+# ==============================
+# VALIDATION FUNCTIONS
+# ==============================
 def is_valid_contact_number(number):
+
     return bool(re.fullmatch(r"09\d{9}", number))
 
+
 def is_valid_email(email):
+
     pattern = r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
+
     return bool(re.fullmatch(pattern, email))
 
-def show_students():
+
+# ==============================
+# SHOW STUDENTS WINDOW
+# ==============================
+def show_students(on_student_added=None):
 
     window = tk.Toplevel()
     setup_window(window, "Students")
-
     window.configure(bg="#F3F6FC")
 
+    # Title
     title_label = tk.Label(
         window,
         text="ADD STUDENTS",
@@ -279,21 +367,30 @@ def show_students():
         fg="#1E293B",
         anchor="w"
     )
-    title_label.pack(fill="x", padx=20, pady=(15, 10))
 
+    title_label.pack(
+        fill="x",
+        padx=20,
+        pady=(15, 10)
+    )
+
+    # Create sections
     personal_fields = create_personal_section(window)
     contact_fields = create_contact_section(window)
     academic_fields = create_academic_section(window)
 
-
+    # ==============================
+    # RESET FORM
+    # ==============================
     def reset_form():
+
         personal_placeholders = {
-            "first_name": "e.g  Juan",
-            "middle_initial": "e.g  J.",
-            "last_name": "e.g  Dela Cruz",
-            "prefix": "e.g  Jr, II",
+            "first_name": "e.g Juan",
+            "middle_initial": "e.g J.",
+            "last_name": "e.g Dela Cruz",
+            "prefix": "e.g Jr, II",
             "birthday": "YYYY-MM-DD",
-            "birth_place": "e.g  Marikina City"
+            "birth_place": "e.g Marikina City"
         }
 
         contact_placeholders = {
@@ -303,43 +400,95 @@ def show_students():
             "emergency_contact_number": "09XXXXXXXXX"
         }
 
-        # Clear text fields and restore placeholders.
+        # Reset personal fields
         for name, entry in personal_fields.items():
             entry.delete(0, tk.END)
             add_placeholder(entry, personal_placeholders[name])
 
+        # Reset contact fields
         for name, entry in contact_fields.items():
             entry.delete(0, tk.END)
             add_placeholder(entry, contact_placeholders[name])
 
-        # Reset academic dropdowns.
+        # Reset academic dropdowns
         academic_fields["admission_type"].set("")
+
         academic_fields["year_level"]["values"] = (
-            "1st Year", "2nd Year", "3rd Year", "4th Year"
+            "1st Year",
+            "2nd Year",
+            "3rd Year",
+            "4th Year"
         )
+
         academic_fields["year_level"].set("")
         academic_fields["course"].set("")
-        
 
+    # ==============================
+    # SAVE STUDENT
+    # ==============================
     def save_student():
-        first_name = get_field_value(personal_fields["first_name"], "e.g  Juan")
-        middle_initial = get_field_value(personal_fields["middle_initial"], "e.g  J.")
-        last_name = get_field_value(personal_fields["last_name"], "e.g  Dela Cruz")
-        prefix = get_field_value(personal_fields["prefix"], "e.g  Jr, II")
-        birthday = get_field_value(personal_fields["birthday"], "YYYY-MM-DD")
-        birth_place = get_field_value(personal_fields["birth_place"], "e.g  Marikina City")
-        address = get_field_value(contact_fields["address"], "House/Unit/Lot No., Street Name, Subdivision/Village, Barangay, City")
-        email = get_field_value(contact_fields["email"], "example@email.com")
-        contact_number = get_field_value(contact_fields["contact_number"], "09XXXXXXXXX")
-        emergency_contact_number = get_field_value(contact_fields["emergency_contact_number"], "09XXXXXXXXX")
-        admission_type = academic_fields["admission_type"].get()
-        year_level = academic_fields["year_level"].get()
-        
-        selected_course = academic_fields["course"].get()
-        course = academic_fields["course_lookup"].get(
-            selected_course, ""
+
+        first_name = get_field_value(
+            personal_fields["first_name"],
+            "e.g Juan"
         )
 
+        middle_initial = get_field_value(
+            personal_fields["middle_initial"],
+            "e.g J."
+        )
+
+        last_name = get_field_value(
+            personal_fields["last_name"],
+            "e.g Dela Cruz"
+        )
+
+        prefix = get_field_value(
+            personal_fields["prefix"],
+            "e.g Jr, II"
+        )
+
+        birthday = get_field_value(
+            personal_fields["birthday"],
+            "YYYY-MM-DD"
+        )
+
+        birth_place = get_field_value(
+            personal_fields["birth_place"],
+            "e.g Marikina City"
+        )
+
+        address = get_field_value(
+            contact_fields["address"],
+            "House/Unit/Lot No., Street Name, Subdivision/Village, Barangay, City"
+        )
+
+        email = get_field_value(
+            contact_fields["email"],
+            "example@email.com"
+        )
+
+        contact_number = get_field_value(
+            contact_fields["contact_number"],
+            "09XXXXXXXXX"
+        )
+
+        emergency_contact_number = get_field_value(
+            contact_fields["emergency_contact_number"],
+            "09XXXXXXXXX"
+        )
+
+        admission_type = academic_fields["admission_type"].get()
+        year_level = academic_fields["year_level"].get()
+
+        selected_course = academic_fields["course"].get()
+
+        course = academic_fields["course_lookup"].get(
+            selected_course,
+            ""
+        )
+
+        # First Name
         if not first_name:
             messagebox.showerror(
                 "Error",
@@ -348,6 +497,7 @@ def show_students():
             )
             return
 
+        # Last Name
         if not last_name:
             messagebox.showerror(
                 "Error",
@@ -355,10 +505,12 @@ def show_students():
                 parent=window
             )
             return
-        
+
+        # Birthday
         try:
             birth_date = datetime.strptime(
-            birthday, "%Y-%m-%d"
+                birthday,
+                "%Y-%m-%d"
             ).date()
 
             if birth_date > datetime.today().date():
@@ -366,13 +518,14 @@ def show_students():
 
         except ValueError:
             messagebox.showerror(
-            "Invalid Birthday",
-            "Enter a valid birthday in YYYY-MM-DD format. "
-            "Birthday cannot be in the future.",
-            parent=window
+                "Invalid Birthday",
+                "Enter a valid birthday in YYYY-MM-DD format. "
+                "Birthday cannot be in the future.",
+                parent=window
             )
             return
 
+        # Birth Place
         if not birth_place:
             messagebox.showerror(
                 "Error",
@@ -381,38 +534,46 @@ def show_students():
             )
             return
 
+        # Contact Information
         if not address or not email or not contact_number:
-                    messagebox.showerror(
-                        "Error",
-                        "Please complete Contact Information fields.",
-                        parent=window
-                    )
-                    return
+            messagebox.showerror(
+                "Error",
+                "Please complete Contact Information fields.",
+                parent=window
+            )
+            return
 
+        # Email Validation
         if not is_valid_email(email):
             messagebox.showerror(
-            "Invalid Email",
-            "Please enter a valid email address, such as name@example.com.",
-            parent=window
+                "Invalid Email",
+                "Please enter a valid email address, such as name@example.com.",
+                parent=window
             )
             return
 
+        # Contact Number Validation
         if not is_valid_contact_number(contact_number):
             messagebox.showerror(
-            "Invalid Contact Number",
-            "Please input valid format",
-            parent=window
+                "Invalid Contact Number",
+                "Please input a valid 11-digit number starting with 09.",
+                parent=window
             )
             return
 
-        if emergency_contact_number and not is_valid_contact_number(emergency_contact_number):
+        # Emergency Contact Validation
+        if (
+            emergency_contact_number
+            and not is_valid_contact_number(emergency_contact_number)
+        ):
             messagebox.showerror(
-            "Invalid Emergency Contact",
-            "Please input valid format",
-            parent=window
+                "Invalid Emergency Contact",
+                "Please input a valid 11-digit number starting with 09.",
+                parent=window
             )
             return
-        
+
+        # Academic Information
         if not admission_type or not year_level or not course:
             messagebox.showerror(
                 "Error",
@@ -420,12 +581,14 @@ def show_students():
                 parent=window
             )
             return
-        
-        # Check for students with the same first and last name.
+
+        # ==============================
+        # CHECK DUPLICATE STUDENTS
+        # ==============================
         matching_students = find_students_by_name(
-                first_name,
-                last_name
-            )
+            first_name,
+            last_name
+        )
 
         if matching_students is None:
             messagebox.showerror(
@@ -437,6 +600,7 @@ def show_students():
             return
 
         if matching_students:
+
             confirm = messagebox.askyesno(
                 "Possible Duplicate Student",
                 f"A student named {first_name} {last_name} "
@@ -449,6 +613,9 @@ def show_students():
             if not confirm:
                 return
 
+        # ==============================
+        # INSERT STUDENT INTO DATABASE
+        # ==============================
         success = add_student(
             first_name=first_name,
             middle_name=middle_initial,
@@ -473,26 +640,31 @@ def show_students():
             )
             return
 
+        # Success message
         messagebox.showinfo(
             "Success",
             "Student successfully added!",
             parent=window
         )
 
-        # Clear text fields and restore placeholders.
+        # Reset form
         reset_form()
 
-        # Reset academic dropdowns.
-        academic_fields["admission_type"].set("")
-        academic_fields["year_level"]["values"] = (
-            "1st Year", "2nd Year", "3rd Year", "4th Year"
-        )
-        academic_fields["year_level"].set("")
-        academic_fields["course"].set("")
+        # Update dashboard student count
+        if on_student_added:
+            on_student_added()
 
-    button_frame = tk.Frame(window)
+    # ==============================
+    # BUTTONS
+    # ==============================
+    button_frame = tk.Frame(
+        window,
+        bg="#F3F6FC"
+    )
+
     button_frame.pack(pady=10)
 
+    # Close Button
     close_button = tk.Button(
         button_frame,
         text="Close",
@@ -504,8 +676,10 @@ def show_students():
         cursor="hand2",
         command=window.destroy
     )
+
     close_button.pack(side="left", padx=5)
 
+    # Reset Button
     reset_button = tk.Button(
         button_frame,
         text="Reset",
@@ -517,8 +691,10 @@ def show_students():
         cursor="hand2",
         command=reset_form
     )
+
     reset_button.pack(side="left", padx=5)
 
+    # Save Button
     save_button = tk.Button(
         button_frame,
         text="Save Student",
@@ -530,4 +706,5 @@ def show_students():
         cursor="hand2",
         command=save_student
     )
+
     save_button.pack(side="left", padx=5)

@@ -255,3 +255,19 @@ def delete_course(course_id):
 
     finally:
         connection.close()
+
+def get_course_count():
+    connection = sqlite3.connect("database/database.db")
+
+    try:
+        cursor = connection.cursor()
+        cursor.execute("SELECT COUNT(*) FROM courses")
+
+        return cursor.fetchone()[0]
+
+    except sqlite3.Error as error:
+        print("Database error:", error)
+        return 0
+
+    finally:
+        connection.close()

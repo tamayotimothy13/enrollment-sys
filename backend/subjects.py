@@ -195,3 +195,19 @@ def get_subjects_by_year_semester(year_level, semester):
 
     finally:
         connection.close()
+
+def get_subject_count():
+    connection = sqlite3.connect(DATABASE_PATH)
+
+    try:
+        cursor = connection.cursor()
+        cursor.execute("SELECT COUNT(*) FROM subjects")
+
+        return cursor.fetchone()[0]
+
+    except sqlite3.Error as error:
+        print("Database error:", error)
+        return 0
+
+    finally:
+        connection.close()
