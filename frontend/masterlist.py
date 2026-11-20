@@ -56,7 +56,6 @@ def show_masterlist(parent=None, on_change=None):
 
             course_id, course_code, course_name = course
 
-            # Students store the course name as TEXT.
             if str(course_value).strip().casefold() in (
                 str(course_name).strip().casefold(),
                 str(course_code).strip().casefold()
@@ -261,7 +260,6 @@ def show_masterlist(parent=None, on_change=None):
 
                 display_values = list(student)
 
-                # Hide deleted or unregistered courses.
                 display_values[3] = get_course_display(
                     display_values[3]
                 )
@@ -461,12 +459,10 @@ def show_masterlist(parent=None, on_change=None):
             ("Year Level", "year_level"),
         ]
 
-        # Check if the student's course still exists.
         registered_course = find_registered_course(
             student.get("course")
         )
 
-        # Only display Course if it exists.
         if registered_course is not None:
             fields.append(
                 ("Course", "course")
@@ -686,26 +682,35 @@ def show_masterlist(parent=None, on_change=None):
 
         next_row = len(field_names) + 1
 
+        all_year_levels = (
+            "1st Year",
+            "2nd Year",
+            "3rd Year",
+            "4th Year"
+        )
+
         dropdown_options = {
             "admission_type": (
                 "Admission Type",
-                ("New Student", "Returning Student")
+                (
+                    "New Student",
+                    "Transferee",
+                    "Returning Student"
+                )
             ),
 
             "year_level": (
                 "Year Level",
-                ("1st Year", "2nd Year", "3rd Year", "4th Year")
+                all_year_levels
             ),
         }
 
-        # Retrieve courses from the database.
         registered_courses = get_registered_courses()
 
         course_names = tuple(
             course[2] for course in registered_courses
         )
 
-        # Add Course dropdown only when courses exist.
         if registered_courses:
 
             dropdown_options["course"] = (
@@ -774,6 +779,46 @@ def show_masterlist(parent=None, on_change=None):
 
             dropdowns[key] = combo
 
+        # =========================
+        # YEAR LEVEL RULES
+        # =========================
+
+        admission_combo = dropdowns["admission_type"]
+        year_combo = dropdowns["year_level"]
+
+        def update_year_level_options(event=None):
+
+            admission_type = admission_combo.get()
+
+            if admission_type == "New Student":
+
+                # New Students can only be 1st Year.
+                year_combo.configure(
+                    values=("1st Year",)
+                )
+
+                year_combo.set("1st Year")
+
+            else:
+
+                # Transferees and Returning Students
+                # can select any year level.
+                year_combo.configure(
+                    values=all_year_levels
+                )
+
+                if year_combo.get() not in all_year_levels:
+                    year_combo.set("1st Year")
+
+        # Update Year Level whenever Admission Type changes.
+        admission_combo.bind(
+            "<<ComboboxSelected>>",
+            update_year_level_options
+        )
+
+        # Apply the rule when opening the Edit Student window.
+        update_year_level_options()
+
         form.columnconfigure(
             1,
             weight=1
@@ -790,10 +835,14 @@ def show_masterlist(parent=None, on_change=None):
                 for key, entry in entries.items()
             }
 
-            admission_type = dropdowns["admission_type"].get()
-            year_level = dropdowns["year_level"].get()
+            admission_type = admission_combo.get()
+            year_level = year_combo.get()
 
-            # Preserve old course value if no courses exist.
+            # New Students must always be 1st Year.
+            if admission_type == "New Student":
+                year_level = "1st Year"
+                year_combo.set("1st Year")
+
             if registered_courses:
 
                 course = dropdowns["course"].get()
@@ -834,7 +883,6 @@ def show_masterlist(parent=None, on_change=None):
 
                 return
 
-            # Require course selection when courses exist.
             if registered_courses and not course:
 
                 messagebox.showwarning(
@@ -884,10 +932,8 @@ def show_masterlist(parent=None, on_change=None):
             if details_window and details_window.winfo_exists():
                 details_window.destroy()
 
-            # Refresh masterlist.
             search_students()
 
-            # Refresh dashboard.
             if on_change:
                 on_change()
 

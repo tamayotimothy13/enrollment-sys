@@ -1,6 +1,160 @@
+
 import sqlite3
 
 DATABASE_PATH = "database/database.db"
+
+YEAR_NAMES = {
+    1: "1st Year",
+    2: "2nd Year",
+    3: "3rd Year",
+    4: "4th Year"
+}
+
+
+# ==========================================
+# HELPER FUNCTIONS
+# ==========================================
+
+def get_year_number(year_level):
+    if year_level is None:
+        return None
+
+    value = str(year_level).strip().lower()
+
+    word_numbers = {
+        "first": 1,
+        "second": 2,
+        "third": 3,
+        "fourth": 4
+    }
+
+    for word, number in word_numbers.items():
+        if word in value:
+            return number
+
+    import re
+    match = re.search(r"\d+", value)
+
+    if match:
+        return int(match.group())
+
+    return None
+
+
+def get_student_info(cursor, student_id):
+    cursor.execute("""
+        SELECT admission_type, course, year_level
+        FROM students
+        WHERE student_id = ?
+    """, (student_id,))
+
+    return cursor.fetchone()
+
+
+def get_allowed_subjects(
+    cursor,
+    student_id,
+    semester
+):
+    student = get_student_info(cursor, student_id)
+
+    if student is None:
+        return []
+
+    admission_type, student_course, year_level = student
+
+    year_number = get_year_number(year_level)
+
+    if year_number not in YEAR_NAMES:
+        return []
+
+    query = """
+        SELECT
+            subjects.subject_id,
+            subjects.subject_code,
+            subjects.subject_name,
+            course_subjects.year_level,
+            subjects.units
+        FROM courses
+        JOIN course_subjects
+            ON courses.course_id = course_subjects.course_id
+        JOIN subjects
+            ON course_subjects.subject_id = subjects.subject_id
+        WHERE (
+            UPPER(courses.course_code) = UPPER(?)
+            OR UPPER(courses.course_name) = UPPER(?)
+        )
+        AND course_subjects.semester = ?
+    """
+
+    parameters = [
+        student_course,
+        student_course,
+        semester
+    ]
+
+    if str(admission_type).strip().lower() == "transferee":
+        query += """
+            AND CAST(
+                SUBSTR(course_subjects.year_level, 1, 1)
+                AS INTEGER
+            ) <= ?
+        """
+        parameters.append(year_number)
+
+    else:
+        query += """
+            AND course_subjects.year_level = ?
+        """
+        parameters.append(YEAR_NAMES[year_number])
+
+    query += " ORDER BY subjects.subject_code"
+
+    cursor.execute(query, parameters)
+
+    return cursor.fetchall()
+
+
+def validate_subject_ids(
+    cursor,
+    student_id,
+    semester,
+    subject_ids
+):
+    allowed_subjects = get_allowed_subjects(
+        cursor,
+        student_id,
+        semester
+    )
+
+    allowed_ids = {
+        int(subject[0])
+        for subject in allowed_subjects
+    }
+
+    try:
+        selected_ids = [int(subject_id) for subject_id in subject_ids]
+    except (TypeError, ValueError):
+        return False
+
+    # Prevent duplicate subject IDs.
+    if len(selected_ids) != len(set(selected_ids)):
+        return False
+
+    # Require at least one subject.
+    if not selected_ids:
+        return False
+
+    # Reject subjects outside the student's permitted year levels.
+    return all(
+        subject_id in allowed_ids
+        for subject_id in selected_ids
+    )
+
+
+# ==========================================
+# CREATE ENROLLMENT TABLES
+# ==========================================
 
 def create_enrollment_tables():
     connection = sqlite3.connect(DATABASE_PATH)
@@ -52,6 +206,11 @@ def create_enrollment_tables():
     finally:
         connection.close()
 
+
+# ==========================================
+# CREATE ENROLLMENT
+# ==========================================
+
 def create_enrollment(student_id, academic_year, semester):
     connection = sqlite3.connect(DATABASE_PATH)
 
@@ -82,12 +241,39 @@ def create_enrollment(student_id, academic_year, semester):
     finally:
         connection.close()
 
+
+# ==========================================
+# ADD SUBJECT TO ENROLLMENT
+# ==========================================
+
 def add_subject_to_enrollment(enrollment_id, subject_id):
     connection = sqlite3.connect(DATABASE_PATH)
 
     try:
         connection.execute("PRAGMA foreign_keys = ON")
         cursor = connection.cursor()
+
+        cursor.execute("""
+            SELECT student_id, semester
+            FROM enrollments
+            WHERE enrollment_id = ?
+        """, (enrollment_id,))
+
+        enrollment = cursor.fetchone()
+
+        if enrollment is None:
+            return False
+
+        student_id, semester = enrollment
+
+        if not validate_subject_ids(
+            cursor,
+            student_id,
+            semester,
+            [subject_id]
+        ):
+            print("Subject does not match the student's year level.")
+            return False
 
         cursor.execute("""
             INSERT INTO enrollment_subjects (
@@ -111,20 +297,18 @@ def add_subject_to_enrollment(enrollment_id, subject_id):
     finally:
         connection.close()
 
+
+# ==========================================
+# GET AVAILABLE SUBJECTS
+# ==========================================
+
 def get_available_subjects(student_id, semester):
     connection = sqlite3.connect(DATABASE_PATH)
 
     try:
         cursor = connection.cursor()
 
-        # Get the student's admission type, course, and year level.
-        cursor.execute("""
-            SELECT admission_type, course, year_level
-            FROM students
-            WHERE student_id = ?
-        """, (student_id,))
-
-        student = cursor.fetchone()
+        student = get_student_info(cursor, student_id)
 
         if student is None:
             print("Student not found.")
@@ -132,70 +316,19 @@ def get_available_subjects(student_id, semester):
 
         admission_type, student_course, year_level = student
 
-        # Convert the numeric year level to its name.
-        year_names = {
-            1: "1st Year",
-            2: "2nd Year",
-            3: "3rd Year",
-            4: "4th Year"
-        }
-
-        year_name = year_names.get(year_level)
-
-        if year_name is None:
+        if get_year_number(year_level) not in YEAR_NAMES:
             print("Invalid student year level.")
             return []
 
-        # Common query: retrieve subjects assigned to the student's course.
-        query = """
-            SELECT
-                subjects.subject_id,
-                subjects.subject_code,
-                subjects.subject_name,
-                course_subjects.year_level,
-                subjects.units
-            FROM courses
-            JOIN course_subjects
-                ON courses.course_id = course_subjects.course_id
-            JOIN subjects
-                ON course_subjects.subject_id = subjects.subject_id
-            WHERE (
-                UPPER(courses.course_code) = UPPER(?)
-                OR UPPER(courses.course_name) = UPPER(?)
-            )
-            AND course_subjects.semester = ?
-        """
+        if semester not in ("1st Semester", "2nd Semester"):
+            print("Invalid semester.")
+            return []
 
-        parameters = [
-            student_course,
-            student_course,
+        return get_allowed_subjects(
+            cursor,
+            student_id,
             semester
-        ]
-
-        # Regular students: restrict subjects to their year level.
-        # Transferees: allow subjects from any year level.
-        
-        if admission_type == "Transferee":
-            # Transferees can take subjects from their year
-            # level and any earlier year level.
-            query += """
-                AND CAST(
-                    SUBSTR(course_subjects.year_level, 1, 1)
-                    AS INTEGER
-                ) <= ?
-            """
-            parameters.append(year_level)
-
-        else:
-            # Regular students can take subjects from their
-            # assigned year level only.
-            query += """
-                AND course_subjects.year_level = ?
-            """
-            parameters.append(year_name)
-
-        cursor.execute(query, parameters)
-        return cursor.fetchall()
+        )
 
     except sqlite3.Error as error:
         print("Database error:", error)
@@ -204,6 +337,10 @@ def get_available_subjects(student_id, semester):
     finally:
         connection.close()
 
+
+# ==========================================
+# GET UNENROLLED STUDENTS
+# ==========================================
 
 def get_unenrolled_students(academic_year, semester):
     connection = sqlite3.connect(DATABASE_PATH)
@@ -234,20 +371,49 @@ def get_unenrolled_students(academic_year, semester):
 
     except sqlite3.Error as error:
         print("Database error:", error)
-        return None
+        return []
 
     finally:
         connection.close()
 
 
-def save_enrollment(student_id, academic_year, semester, subject_ids):
+# ==========================================
+# SAVE ENROLLMENT WITH VALIDATION
+# ==========================================
+
+def save_enrollment(
+    student_id,
+    academic_year,
+    semester,
+    subject_ids
+):
     connection = sqlite3.connect(DATABASE_PATH)
 
     try:
         connection.execute("PRAGMA foreign_keys = ON")
         cursor = connection.cursor()
 
-        # Create the enrollment record.
+        if semester not in ("1st Semester", "2nd Semester"):
+            print("Invalid semester.")
+            return None
+
+        if not academic_year or not academic_year.strip():
+            print("Academic year is required.")
+            return None
+
+        # Validate selected subjects before saving.
+        if not validate_subject_ids(
+            cursor,
+            student_id,
+            semester,
+            subject_ids
+        ):
+            print(
+                "Enrollment rejected: one or more subjects "
+                "do not match the student's permitted year level."
+            )
+            return None
+
         cursor.execute("""
             INSERT INTO enrollments (
                 student_id,
@@ -255,11 +421,10 @@ def save_enrollment(student_id, academic_year, semester, subject_ids):
                 semester
             )
             VALUES (?, ?, ?)
-        """, (student_id, academic_year, semester))
+        """, (student_id, academic_year.strip(), semester))
 
         enrollment_id = cursor.lastrowid
 
-        # Add all selected subjects to this enrollment.
         for subject_id in subject_ids:
             cursor.execute("""
                 INSERT INTO enrollment_subjects (
@@ -267,9 +432,8 @@ def save_enrollment(student_id, academic_year, semester, subject_ids):
                     subject_id
                 )
                 VALUES (?, ?)
-            """, (enrollment_id, subject_id))
+            """, (enrollment_id, int(subject_id)))
 
-        # Save everything together.
         connection.commit()
         return enrollment_id
 
@@ -281,6 +445,10 @@ def save_enrollment(student_id, academic_year, semester, subject_ids):
     finally:
         connection.close()
 
+
+# ==========================================
+# GET ENROLLMENT DETAILS
+# ==========================================
 
 def get_enrollment_details(enrollment_id):
     connection = sqlite3.connect(DATABASE_PATH)
@@ -298,15 +466,45 @@ def get_enrollment_details(enrollment_id):
                 subjects.subject_id,
                 subjects.subject_code,
                 subjects.subject_name,
-                subjects.units
+                subjects.units,
+
+                (
+                    SELECT course_subjects.year_level
+                    FROM course_subjects
+                    JOIN courses
+                        ON courses.course_id =
+                           course_subjects.course_id
+                    JOIN students
+                        ON students.student_id =
+                           enrollments.student_id
+                    WHERE course_subjects.subject_id =
+                          subjects.subject_id
+                      AND course_subjects.semester =
+                          enrollments.semester
+                      AND (
+                          UPPER(courses.course_code) =
+                          UPPER(students.course)
+
+                          OR
+
+                          UPPER(courses.course_name) =
+                          UPPER(students.course)
+                      )
+                    LIMIT 1
+                ) AS subject_year_level
+
             FROM enrollments
+
             LEFT JOIN enrollment_subjects
                 ON enrollments.enrollment_id =
                    enrollment_subjects.enrollment_id
+
             LEFT JOIN subjects
                 ON enrollment_subjects.subject_id =
                    subjects.subject_id
+
             WHERE enrollments.enrollment_id = ?
+
             ORDER BY subjects.subject_code
         """, (enrollment_id,))
 
@@ -319,6 +517,10 @@ def get_enrollment_details(enrollment_id):
     finally:
         connection.close()
 
+
+# ==========================================
+# GET ALL ENROLLMENTS
+# ==========================================
 
 def get_all_enrollments():
     connection = sqlite3.connect(DATABASE_PATH)
@@ -353,16 +555,79 @@ def get_all_enrollments():
         connection.close()
 
 
+# ==========================================
+# UPDATE ENROLLMENT SUBJECTS WITH VALIDATION
+# ==========================================
+
+def update_enrollment_subjects(enrollment_id, subject_ids):
+    connection = sqlite3.connect(DATABASE_PATH)
+
+    try:
+        connection.execute("PRAGMA foreign_keys = ON")
+        cursor = connection.cursor()
+
+        cursor.execute("""
+            SELECT student_id, semester
+            FROM enrollments
+            WHERE enrollment_id = ?
+        """, (enrollment_id,))
+
+        enrollment = cursor.fetchone()
+
+        if enrollment is None:
+            return False
+
+        student_id, semester = enrollment
+
+        if not validate_subject_ids(
+            cursor,
+            student_id,
+            semester,
+            subject_ids
+        ):
+            print(
+                "Update rejected: selected subjects do not "
+                "match the student's permitted year levels."
+            )
+            return False
+
+        cursor.execute("""
+            DELETE FROM enrollment_subjects
+            WHERE enrollment_id = ?
+        """, (enrollment_id,))
+
+        for subject_id in set(int(value) for value in subject_ids):
+            cursor.execute("""
+                INSERT INTO enrollment_subjects (
+                    enrollment_id,
+                    subject_id
+                )
+                VALUES (?, ?)
+            """, (enrollment_id, subject_id))
+
+        connection.commit()
+        return True
+
+    except sqlite3.Error as error:
+        connection.rollback()
+        print("Could not update enrollment subjects:", error)
+        return False
+
+    finally:
+        connection.close()
+
+
+# ==========================================
+# DELETE ENROLLMENT
+# ==========================================
+
 def delete_enrollment(enrollment_id):
     connection = sqlite3.connect(DATABASE_PATH)
 
     try:
-        # Enable foreign-key enforcement for this connection.
         connection.execute("PRAGMA foreign_keys = ON")
         cursor = connection.cursor()
 
-        # Delete the selected enrollment.
-        # Its linked enrollment_subjects rows are deleted automatically.
         cursor.execute("""
             DELETE FROM enrollments
             WHERE enrollment_id = ?
@@ -382,6 +647,7 @@ def delete_enrollment(enrollment_id):
 
     finally:
         connection.close()
+
 
 if __name__ == "__main__":
     print("\n--- ALL ENROLLMENTS ---")
