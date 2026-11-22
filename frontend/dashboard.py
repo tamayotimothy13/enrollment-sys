@@ -381,7 +381,3 @@ def show_dashboard():
     update_dashboard()
 
     window.mainloop()
-
-
-if __name__ == "__main__":
-    show_dashboard()
