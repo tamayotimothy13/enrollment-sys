@@ -12,6 +12,7 @@ from backend.students import (
 )
 
 from backend.courses import get_all_courses
+from backend.enrollments import sync_enrollment_subjects_to_year
 
 
 def show_masterlist(parent=None, on_change=None):
@@ -921,9 +922,26 @@ def show_masterlist(parent=None, on_change=None):
 
                 return
 
+            # Synchronize existing enrollment subjects with the saved
+            # course, admission type, and year level.
+            subjects_synced = sync_enrollment_subjects_to_year(student_id)
+
+            if subjects_synced:
+                result_message = (
+                    "Student information updated successfully.\n\n"
+                    "The enrolled subjects have also been updated "
+                    "to match the student's year level."
+                )
+            else:
+                result_message = (
+                    "Student information was saved, but the enrolled "
+                    "subjects could not be synchronized.\n\n"
+                    "Please check the terminal for the database error."
+                )
+
             messagebox.showinfo(
-                "Success",
-                "Student information updated successfully.",
+                "Update Result",
+                result_message,
                 parent=edit_window
             )
 

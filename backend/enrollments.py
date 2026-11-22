@@ -1,5 +1,6 @@
 
 import sqlite3
+import re
 
 DATABASE_PATH = "database/database.db"
 
@@ -16,6 +17,7 @@ YEAR_NAMES = {
 # ==========================================
 
 def get_year_number(year_level):
+
     if year_level is None:
         return None
 
@@ -32,7 +34,6 @@ def get_year_number(year_level):
         if word in value:
             return number
 
-    import re
     match = re.search(r"\d+", value)
 
     if match:
@@ -42,6 +43,7 @@ def get_year_number(year_level):
 
 
 def get_student_info(cursor, student_id):
+
     cursor.execute("""
         SELECT admission_type, course, year_level
         FROM students
@@ -51,11 +53,8 @@ def get_student_info(cursor, student_id):
     return cursor.fetchone()
 
 
-def get_allowed_subjects(
-    cursor,
-    student_id,
-    semester
-):
+def get_allowed_subjects(cursor, student_id, semester):
+
     student = get_student_info(cursor, student_id)
 
     if student is None:
@@ -94,18 +93,22 @@ def get_allowed_subjects(
     ]
 
     if str(admission_type).strip().lower() == "transferee":
+
         query += """
             AND CAST(
                 SUBSTR(course_subjects.year_level, 1, 1)
                 AS INTEGER
             ) <= ?
         """
+
         parameters.append(year_number)
 
     else:
+
         query += """
             AND course_subjects.year_level = ?
         """
+
         parameters.append(YEAR_NAMES[year_number])
 
     query += " ORDER BY subjects.subject_code"
@@ -121,6 +124,7 @@ def validate_subject_ids(
     semester,
     subject_ids
 ):
+
     allowed_subjects = get_allowed_subjects(
         cursor,
         student_id,
@@ -133,19 +137,16 @@ def validate_subject_ids(
     }
 
     try:
-        selected_ids = [int(subject_id) for subject_id in subject_ids]
+        selected_ids = [int(value) for value in subject_ids]
     except (TypeError, ValueError):
         return False
 
-    # Prevent duplicate subject IDs.
     if len(selected_ids) != len(set(selected_ids)):
         return False
 
-    # Require at least one subject.
     if not selected_ids:
         return False
 
-    # Reject subjects outside the student's permitted year levels.
     return all(
         subject_id in allowed_ids
         for subject_id in selected_ids
@@ -157,6 +158,7 @@ def validate_subject_ids(
 # ==========================================
 
 def create_enrollment_tables():
+
     connection = sqlite3.connect(DATABASE_PATH)
 
     try:
@@ -212,6 +214,7 @@ def create_enrollment_tables():
 # ==========================================
 
 def create_enrollment(student_id, academic_year, semester):
+
     connection = sqlite3.connect(DATABASE_PATH)
 
     try:
@@ -247,6 +250,7 @@ def create_enrollment(student_id, academic_year, semester):
 # ==========================================
 
 def add_subject_to_enrollment(enrollment_id, subject_id):
+
     connection = sqlite3.connect(DATABASE_PATH)
 
     try:
@@ -303,6 +307,7 @@ def add_subject_to_enrollment(enrollment_id, subject_id):
 # ==========================================
 
 def get_available_subjects(student_id, semester):
+
     connection = sqlite3.connect(DATABASE_PATH)
 
     try:
@@ -343,6 +348,7 @@ def get_available_subjects(student_id, semester):
 # ==========================================
 
 def get_unenrolled_students(academic_year, semester):
+
     connection = sqlite3.connect(DATABASE_PATH)
 
     try:
@@ -387,6 +393,7 @@ def save_enrollment(
     semester,
     subject_ids
 ):
+
     connection = sqlite3.connect(DATABASE_PATH)
 
     try:
@@ -401,17 +408,13 @@ def save_enrollment(
             print("Academic year is required.")
             return None
 
-        # Validate selected subjects before saving.
         if not validate_subject_ids(
             cursor,
             student_id,
             semester,
             subject_ids
         ):
-            print(
-                "Enrollment rejected: one or more subjects "
-                "do not match the student's permitted year level."
-            )
+            print("Enrollment rejected: invalid subjects.")
             return None
 
         cursor.execute("""
@@ -426,6 +429,7 @@ def save_enrollment(
         enrollment_id = cursor.lastrowid
 
         for subject_id in subject_ids:
+
             cursor.execute("""
                 INSERT INTO enrollment_subjects (
                     enrollment_id,
@@ -451,6 +455,7 @@ def save_enrollment(
 # ==========================================
 
 def get_enrollment_details(enrollment_id):
+
     connection = sqlite3.connect(DATABASE_PATH)
 
     try:
@@ -523,6 +528,7 @@ def get_enrollment_details(enrollment_id):
 # ==========================================
 
 def get_all_enrollments():
+
     connection = sqlite3.connect(DATABASE_PATH)
 
     try:
@@ -556,10 +562,11 @@ def get_all_enrollments():
 
 
 # ==========================================
-# UPDATE ENROLLMENT SUBJECTS WITH VALIDATION
+# UPDATE ENROLLMENT SUBJECTS
 # ==========================================
 
 def update_enrollment_subjects(enrollment_id, subject_ids):
+
     connection = sqlite3.connect(DATABASE_PATH)
 
     try:
@@ -585,10 +592,7 @@ def update_enrollment_subjects(enrollment_id, subject_ids):
             semester,
             subject_ids
         ):
-            print(
-                "Update rejected: selected subjects do not "
-                "match the student's permitted year levels."
-            )
+            print("Update rejected: invalid subjects.")
             return False
 
         cursor.execute("""
@@ -597,6 +601,7 @@ def update_enrollment_subjects(enrollment_id, subject_ids):
         """, (enrollment_id,))
 
         for subject_id in set(int(value) for value in subject_ids):
+
             cursor.execute("""
                 INSERT INTO enrollment_subjects (
                     enrollment_id,
@@ -618,10 +623,138 @@ def update_enrollment_subjects(enrollment_id, subject_ids):
 
 
 # ==========================================
+# SYNCHRONIZE ENROLLED SUBJECTS WITH YEAR
+# ==========================================
+
+def sync_enrollment_subjects_to_year(student_id):
+
+    connection = sqlite3.connect(DATABASE_PATH)
+
+    try:
+        connection.execute("PRAGMA foreign_keys = ON")
+        cursor = connection.cursor()
+
+        # Get updated student information.
+        cursor.execute("""
+            SELECT course, year_level
+            FROM students
+            WHERE student_id = ?
+        """, (student_id,))
+
+        student = cursor.fetchone()
+
+        if student is None:
+            print("Student not found.")
+            return False
+
+        student_course, year_level = student
+
+        year_number = get_year_number(year_level)
+
+        if year_number not in YEAR_NAMES:
+            print("Invalid year level.")
+            return False
+
+        current_year = YEAR_NAMES[year_number]
+
+        # Get latest academic year enrollments.
+        cursor.execute("""
+            SELECT enrollment_id, semester
+            FROM enrollments
+            WHERE student_id = ?
+              AND academic_year = (
+                  SELECT MAX(academic_year)
+                  FROM enrollments
+                  WHERE student_id = ?
+              )
+        """, (student_id, student_id))
+
+        enrollments = cursor.fetchall()
+
+        if not enrollments:
+            connection.commit()
+            return True
+
+        for enrollment_id, semester in enrollments:
+
+            # Get valid subject IDs from the subjects table.
+            cursor.execute("""
+                SELECT DISTINCT subjects.subject_id
+                FROM courses
+                INNER JOIN course_subjects
+                    ON courses.course_id = course_subjects.course_id
+                INNER JOIN subjects
+                    ON course_subjects.subject_id = subjects.subject_id
+                WHERE (
+                    UPPER(courses.course_code) = UPPER(?)
+                    OR UPPER(courses.course_name) = UPPER(?)
+                )
+                AND course_subjects.semester = ?
+                AND course_subjects.year_level = ?
+                AND subjects.year_level = ?
+                AND subjects.semester = ?
+                ORDER BY subjects.subject_code
+            """, (
+                student_course,
+                student_course,
+                semester,
+                current_year,
+                current_year,
+                semester
+            ))
+
+            subject_ids = [
+                row[0] for row in cursor.fetchall()
+            ]
+
+            if not subject_ids:
+                print(
+                    f"No assigned subjects found for "
+                    f"{student_course}, {current_year}, {semester}."
+                )
+
+                connection.rollback()
+                return False
+
+            # Replace existing subjects.
+            cursor.execute("""
+                DELETE FROM enrollment_subjects
+                WHERE enrollment_id = ?
+            """, (enrollment_id,))
+
+            # Insert updated subjects.
+            for subject_id in subject_ids:
+
+                cursor.execute("""
+                    INSERT INTO enrollment_subjects (
+                        enrollment_id,
+                        subject_id
+                    )
+                    SELECT ?, subject_id
+                    FROM subjects
+                    WHERE subject_id = ?
+                """, (enrollment_id, subject_id))
+
+        connection.commit()
+
+        print("Enrolled subjects synchronized successfully.")
+        return True
+
+    except sqlite3.Error as error:
+        connection.rollback()
+        print("Could not synchronize enrolled subjects:", error)
+        return False
+
+    finally:
+        connection.close()
+
+
+# ==========================================
 # DELETE ENROLLMENT
 # ==========================================
 
 def delete_enrollment(enrollment_id):
+
     connection = sqlite3.connect(DATABASE_PATH)
 
     try:
@@ -649,7 +782,12 @@ def delete_enrollment(enrollment_id):
         connection.close()
 
 
+# ==========================================
+# TEST
+# ==========================================
+
 if __name__ == "__main__":
+
     print("\n--- ALL ENROLLMENTS ---")
 
     for enrollment in get_all_enrollments():
