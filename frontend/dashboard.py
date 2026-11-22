@@ -328,41 +328,6 @@ def show_dashboard():
         cards_frame.columnconfigure(i, weight=1)
 
     # ==============================
-    # QUICK ACTIONS
-    # ==============================
-    actions = tk.Frame(
-        main,
-        bg=WHITE,
-        highlightbackground="#E2E8F0",
-        highlightthickness=1,
-        padx=15,
-        pady=12
-    )
-    actions.pack(fill="x")
-
-    tk.Label(
-        actions,
-        text="Quick Actions",
-        font=("Arial", 12, "bold"),
-        bg=WHITE,
-        fg=TEXT_COLOR
-    ).pack(
-        anchor="w",
-        pady=(0, 4)
-    )
-
-    tk.Label(
-        actions,
-        text="Choose a task to get started.",
-        font=("Arial", 9),
-        bg=WHITE,
-        fg=MUTED_COLOR
-    ).pack(
-        anchor="w",
-        pady=(0, 10)
-    )
-
-    # ==============================
     # FOOTER
     # ==============================
     tk.Label(
