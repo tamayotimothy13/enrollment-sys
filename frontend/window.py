@@ -1,24 +1,52 @@
 import tkinter as tk
+import json
+from pathlib import Path
+
+SETTINGS_FILE = Path(__file__).resolve().parent / "settings.json"
 
 def setup_window(window, title):
     window.title(title)
 
-    width = 1000
-    height = 800
+    # Load saved settings
+    default_settings = {
+        "window_width": 1000,
+        "window_height": 800,
+        "window_x": 100,
+        "window_y": 100
+    }
 
-    # Get screen dimensions
-    screen_width = window.winfo_screenwidth()
-    screen_height = window.winfo_screenheight()
+    try:
+        with open(SETTINGS_FILE, "r") as file:
+            settings = {**default_settings, **json.load(file)}
+    except (FileNotFoundError, json.JSONDecodeError):
+        settings = default_settings.copy()
 
-    # Calculate center position
-    x = (screen_width - width) // 2
-    y = (screen_height - height) // 2
+    width = settings["window_width"]
+    height = settings["window_height"]
+    x = settings["window_x"]
+    y = settings["window_y"]
 
-    # Set size and position
+    # Set initial window size and position
     window.geometry(f"{width}x{height}+{x}+{y}")
 
-    # Prevent resizing
-    window.resizable(False, False)
+    # Allow resizing
+    window.resizable(True, True)
+
+    # Save window settings when closing
+    def save_window_settings():
+        settings = {
+            "window_width": window.winfo_width(),
+            "window_height": window.winfo_height(),
+            "window_x": window.winfo_x(),
+            "window_y": window.winfo_y()
+        }
+
+        with open(SETTINGS_FILE, "w") as file:
+            json.dump(settings, file, indent=4)
+
+        window.destroy()
+
+    window.protocol("WM_DELETE_WINDOW", save_window_settings)
 
 
 def create_search_box(parent, search_command=None, clear_command=None):
